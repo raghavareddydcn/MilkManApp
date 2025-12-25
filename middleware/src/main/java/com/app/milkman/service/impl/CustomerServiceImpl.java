@@ -81,8 +81,11 @@ public class CustomerServiceImpl implements CustomerService {
             return response;
         }
         
+        // Generate customer ID (CUST### format)
+        String customerId = generateCustomerId();
+        
         Customers customers = new Customers();
-        customers.setCustomerId(UUID.randomUUID().toString());
+        customers.setCustomerId(customerId);
         customers.setFirstName(custRequest.getFirstName());
         customers.setLastName(custRequest.getLastName());
         customers.setPrimaryPhone(custRequest.getPrimaryPhone());
@@ -94,6 +97,7 @@ public class CustomerServiceImpl implements CustomerService {
         customers.setPinCode(custRequest.getPincode());
         customers.setLandmark(custRequest.getLandmark());
         customers.setStatus(Constants.ACTIVE);
+        customers.setRole("USER"); // Default role for new registrations
 
         customers.setCreatedBy(custRequest.getFirstName());
         customers.setCreatedTime(LocalDateTime.now());
@@ -130,12 +134,15 @@ public class CustomerServiceImpl implements CustomerService {
             log.info("[Authentication] Successful login for customer: {} {} (ID: {})", 
                      customer.getFirstName(), customer.getLastName(), customer.getCustomerId());
             
-            response.setAuthToken(jwtService.GenerateToken(customer.getPrimaryPhone()));
+            String role = customer.getRole() != null ? customer.getRole() : "USER";
+            
+            response.setAuthToken(jwtService.GenerateToken(customer.getPrimaryPhone(), role));
             response.setRefreshToken(jwtService.generateRefreshToken(customer.getPrimaryPhone()));
             response.setStatusCode(SUCCESS_CODE);
             response.setStatus(SUCCESS);
             response.setCustomerName(customer.getFirstName() + " " + customer.getLastName());
             response.setCustomerId(customer.getCustomerId());
+            response.setRole(role);
             return response;
         }
         
@@ -162,8 +169,10 @@ public class CustomerServiceImpl implements CustomerService {
                     log.info("[Token Refresh] Successfully refreshed tokens for customer: {} {} (ID: {})", 
                              customer.getFirstName(), customer.getLastName(), customer.getCustomerId());
                     
+                    String role = customer.getRole() != null ? customer.getRole() : "USER";
+                    
                     // Generate new tokens
-                    String newAccessToken = jwtService.GenerateToken(phoneNumber);
+                    String newAccessToken = jwtService.GenerateToken(phoneNumber, role);
                     String newRefreshToken = jwtService.generateRefreshToken(phoneNumber);
                     
                     return RefreshTokenResponse.builder()
@@ -172,6 +181,7 @@ public class CustomerServiceImpl implements CustomerService {
                             .refreshToken(newRefreshToken)
                             .customerId(customer.getCustomerId())
                             .customerName(customer.getFirstName() + " " + customer.getLastName())
+                            .role(role)
                             .build();
                 }
             }
@@ -188,6 +198,49 @@ public class CustomerServiceImpl implements CustomerService {
                     .status(FAILED)
                     .message("Token refresh failed: " + e.getMessage())
                     .build();
+        }
+    }
+    
+    /**
+     * Generate sequential customer ID in CUST### format
+     */
+    private String generateCustomerId() {
+        try {
+            // Get the latest customer ID
+            List<Customers> allCustomers = customersRepository.findAll();
+            
+            // If no customers exist, start with CUST001
+            if (allCustomers == null || allCustomers.isEmpty()) {
+                return "CUST001";
+            }
+            
+            // Find the highest customer number
+            int maxNumber = 0;
+            for (Customers customer : allCustomers) {
+                String customerId = customer.getCustomerId();
+                // Skip admin accounts and invalid formats
+                if (customerId != null && customerId.startsWith("CUST")) {
+                    try {
+                        String numberPart = customerId.substring(4); // Remove "CUST"
+                        int number = Integer.parseInt(numberPart);
+                        if (number > maxNumber) {
+                            maxNumber = number;
+                        }
+                    } catch (NumberFormatException e) {
+                        // Skip invalid formats
+                        log.warn("[Customer ID Generation] Skipping invalid customer ID format: {}", customerId);
+                    }
+                }
+            }
+            
+            // Generate next ID
+            int nextNumber = maxNumber + 1;
+            return String.format("CUST%03d", nextNumber);
+            
+        } catch (Exception e) {
+            log.error("[Customer ID Generation] Error generating customer ID: {}", e.getMessage(), e);
+            // Fallback to timestamp-based ID if generation fails
+            return "CUST" + System.currentTimeMillis() % 100000;
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.app.milkman.controller;
 
+import com.app.milkman.component.RequireRole;
 import com.app.milkman.entity.Customers;
 import com.app.milkman.model.CustomerAuthRequest;
 import com.app.milkman.model.CustomerAuthResponse;
@@ -51,6 +52,7 @@ public class CustomerController {
         return customerService.refreshToken(refreshTokenRequest);
     }
 
+    @RequireRole({"ADMIN"})
     @GetMapping("/getAll")
     public List<Customers> getAllCustomers(Pageable pageable) {
         List<Customers> customers = customersRepository.findAll();

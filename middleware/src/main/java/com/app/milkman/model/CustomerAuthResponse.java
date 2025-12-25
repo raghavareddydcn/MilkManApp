@@ -10,4 +10,5 @@ public class CustomerAuthResponse extends ParentResponse {
     private String refreshToken;
     private String customerName;
     private String customerId;
+    private String role;
 }

@@ -71,4 +71,7 @@ public class Customers implements Serializable {
     @Column(name = "status")
     private String status;
 
+    @Column(name = "role")
+    private String role;
+
 }

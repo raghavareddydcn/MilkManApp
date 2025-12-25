@@ -72,10 +72,20 @@ api.interceptors.response.use(
           refreshToken: refreshToken
         })
 
-        const { authToken, refreshToken: newRefreshToken } = response.data
+        const { authToken, refreshToken: newRefreshToken, role } = response.data
 
         localStorage.setItem('token', authToken)
         localStorage.setItem('refreshToken', newRefreshToken)
+        
+        // Update user role if provided
+        if (role) {
+          const userStr = localStorage.getItem('user')
+          if (userStr) {
+            const user = JSON.parse(userStr)
+            user.role = role
+            localStorage.setItem('user', JSON.stringify(user))
+          }
+        }
 
         api.defaults.headers.common['Authorization'] = 'Bearer ' + authToken
         originalRequest.headers['Authorization'] = 'Bearer ' + authToken

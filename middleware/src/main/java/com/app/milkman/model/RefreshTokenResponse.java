@@ -16,4 +16,5 @@ public class RefreshTokenResponse {
     private String message;
     private String customerId;
     private String customerName;
+    private String role;
 }

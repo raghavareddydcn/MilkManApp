@@ -1,5 +1,6 @@
 package com.app.milkman.controller;
 
+import com.app.milkman.component.RequireRole;
 import com.app.milkman.model.ProductDetails;
 import com.app.milkman.model.ProductRegRequest;
 import com.app.milkman.model.ProductRegResponse;
@@ -19,6 +20,7 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
+    @RequireRole({"ADMIN"})
     @PostMapping("/register")
     public ProductRegResponse registerProduct(@RequestBody ProductRegRequest productReg) {
         log.info("[Product Registration Request] Product registration endpoint invoked for: {}", 
@@ -27,6 +29,7 @@ public class ProductController {
         return productService.registerProduct(productReg);
     }
 
+    @RequireRole({"ADMIN"})
     @PutMapping("/update")
     public ProductRegResponse updateProduct(@RequestBody ProductRegRequest productReg) {
         log.info("[Product Update Request] Product update endpoint invoked for ID: {}", 

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Search, X } from 'lucide-react'
 import { productAPI } from '../services/api'
+import { useAuth } from '../context/AuthContext'
 
 const Products = () => {
+  const { isAdmin } = useAuth()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -98,10 +100,12 @@ const Products = () => {
           <h1 className="text-3xl font-bold text-gray-800">Products</h1>
           <p className="text-gray-600 mt-1">Manage your product catalog</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="btn-primary flex items-center space-x-2">
-          <Plus className="w-5 h-5" />
-          <span>Add Product</span>
-        </button>
+        {isAdmin() && (
+          <button onClick={() => setShowModal(true)} className="btn-primary flex items-center space-x-2">
+            <Plus className="w-5 h-5" />
+            <span>Add Product</span>
+          </button>
+        )}
       </div>
 
       <div className="relative">
@@ -150,22 +154,24 @@ const Products = () => {
                 </div>
               </div>
 
-              <div className="flex space-x-2 pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => handleEdit(product)}
-                  className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-                >
-                  <Edit2 className="w-4 h-4" />
-                  <span>Edit</span>
-                </button>
-                <button
-                  onClick={() => handleDelete(product.productId)}
-                  className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span>Delete</span>
-                </button>
-              </div>
+              {isAdmin() && (
+                <div className="flex space-x-2 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={() => handleEdit(product)}
+                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    onClick={() => handleDelete(product.productId)}
+                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete</span>
+                  </button>
+                </div>
+              )}
             </div>
           ))
         )}

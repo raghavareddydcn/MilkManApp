@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (phoneNumber, authPin) => {
     try {
       const response = await authAPI.authenticate({ emailIdOrPhone: phoneNumber, authPin })
-      const { authToken, refreshToken, customerName, customerId, status } = response.data
+      const { authToken, refreshToken, customerName, customerId, status, role } = response.data
       
       if (status === 'SUCCESS' && authToken) {
         localStorage.setItem('token', authToken)
@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('lastActivity', Date.now().toString())
         localStorage.removeItem('sessionExpired')
         
-        const customer = { customerId, customerName }
+        const customer = { customerId, customerName, role: role || 'USER' }
         localStorage.setItem('user', JSON.stringify(customer))
         setUser(customer)
         
@@ -124,7 +124,7 @@ export const AuthProvider = ({ children }) => {
   }, [clearTimers, handleLogout])
 
   const isAdmin = () => {
-    return user?.emailId === 'admin@milkman.com' || user?.customerId === 'ADMIN001'
+    return user?.role === 'ADMIN'
   }
 
   return (

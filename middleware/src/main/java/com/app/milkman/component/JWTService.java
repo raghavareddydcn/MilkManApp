@@ -27,6 +27,10 @@ public class JWTService {
         return extractClaim(token, Claims::getSubject);
     }
     
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
+    }
+    
     public String extractPhoneNoFromRefreshToken(String token) {
         return extractClaimFromRefreshToken(token, Claims::getSubject);
     }
@@ -82,9 +86,10 @@ public class JWTService {
         return (phNo.equals(phoneNumber) && !isRefreshTokenExpired(token));
     }
 
-    public String GenerateToken(String phoneNumber) {
+    public String GenerateToken(String phoneNumber, String role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", "access");
+        claims.put("role", role);
         return createToken(claims, phoneNumber, ACCESS_TOKEN_VALIDITY);
     }
     
