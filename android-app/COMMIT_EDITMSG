@@ -1,6 +1,0 @@
-Updated MilkManUI Android project configuration and build files
-
-- Updated Gradle wrapper and build configuration
-- Added IDE configuration files for better development experience
-- Added local.properties template for SDK configuration
-- Updated project compiler and gradle settings

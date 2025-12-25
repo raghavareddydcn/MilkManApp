@@ -1,9 +1,0 @@
-Enhanced logging with structured INFO-level logs across all services and controllers
-
-- Disabled SQL query logging in application.yml (show-sql: false)
-- Added @Slf4j and comprehensive logging to CustomerServiceImpl, ProductServiceImpl, OrderServiceImpl, SubscribeServiceImpl
-- Added INFO-level logging to all controllers with efficient combined log statements
-- Updated entities with proper annotations and relationships
-- Added refresh token functionality (RefreshTokenRequest, RefreshTokenResponse)
-- Enhanced JWT service and customer authentication
-- Updated Dockerfile and build configuration
