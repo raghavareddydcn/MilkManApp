@@ -93,7 +93,7 @@ networks:
     driver: bridge
     name: milkman-monitoring
   default:
-    name: gitmilkman_milkman-network
+    name: milkmanapp_milkman-network
     external: true
 
 volumes:
