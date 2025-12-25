@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # PostgreSQL Database
   postgres:
-    build: ./backend
+    build: ./database
     container_name: milkman-postgres
     ports:
       - "5433:5432"
@@ -58,3 +58,4 @@ volumes:
 networks:
   milkman-network:
     driver: bridge
+

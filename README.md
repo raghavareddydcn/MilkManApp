@@ -6,7 +6,7 @@ A comprehensive milk delivery subscription management platform with Spring Boot 
 
 ```
 MilkManApp/
-├── backend/              # Spring Boot 3.2.0 REST API (Java 17)
+├── middleware/              # Spring Boot 3.2.0 Middleware API (Java 17)
 ├── android-app/          # Android mobile client (API 24+)
 ├── web-app/              # React 18 + Vite 5 web frontend
 ├── monitoring/           # Grafana + Prometheus monitoring stack
@@ -18,7 +18,7 @@ MilkManApp/
 
 ### Prerequisites
 - Docker & Docker Compose
-- JDK 17 (for local backend development)
+- JDK 17 (for local middleware development)
 - Node.js 18+ (for web development)
 - Android Studio (for mobile development)
 
@@ -28,7 +28,7 @@ docker-compose up -d
 ```
 
 ### Access Applications
-- **Backend API**: http://localhost:8081/milkman
+- **Middleware API**: http://localhost:8081/milkman
 - **Swagger UI**: http://localhost:8081/milkman/swagger-ui.html
 - **Web Application**: http://localhost:3001
 - **Grafana Dashboard**: http://localhost:3000 (admin/admin)
@@ -36,7 +36,7 @@ docker-compose up -d
 
 ## 📦 Components
 
-### Backend (`/backend`)
+### Middleware (`/backend`)
 Spring Boot 3.2.0 REST API with PostgreSQL database.
 
 **Tech Stack**:
@@ -47,7 +47,7 @@ Spring Boot 3.2.0 REST API with PostgreSQL database.
 
 **Run Locally**:
 ```bash
-cd backend
+cd middleware
 .\gradlew.bat bootRun
 ```
 
@@ -117,9 +117,9 @@ PostgreSQL 15 with `milkman` schema.
 
 ## 🔧 Development
 
-### Backend Development
+### middleware development
 ```bash
-cd backend
+cd middleware
 .\gradlew.bat build          # Build with tests
 .\gradlew.bat build -x test  # Skip tests
 .\gradlew.bat test           # Run tests
@@ -159,9 +159,9 @@ Access Grafana at http://localhost:3000 (admin/admin).
 
 ## 🧪 Testing
 
-### Backend Tests
+### Middleware Tests
 ```bash
-cd backend
+cd middleware
 .\run-tests.bat              # All working tests
 .\quick-test.bat             # Unit tests only
 .\generate-coverage.bat      # Coverage report
@@ -177,7 +177,7 @@ H2 in-memory database for tests (configured in `src/test/resources/application.y
 ### Individual Services
 ```bash
 docker-compose up -d postgres           # Database only
-docker-compose up -d backend            # Backend API
+docker-compose up -d backend            # Middleware API
 docker-compose up -d web-app            # Web frontend
 docker-compose up -d monitoring         # Full monitoring stack
 ```
@@ -258,3 +258,4 @@ Proprietary - All rights reserved
 ---
 
 **Last Updated**: December 2025
+
