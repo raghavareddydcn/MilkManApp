@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    build: ./backend
+    container_name: milkman-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: milkman
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Welcome@1234
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - milkman-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d milkman"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Application
+  milkman-app:
+    build: ./MilkMan
+    container_name: milkman-app
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/milkman
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Welcome@1234
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - milkman-network
+    restart: unless-stopped
+
+  # React Web UI
+  milkman-web:
+    build: ./MilkManWeb
+    container_name: milkman-web
+    ports:
+      - "3001:3001"
+    environment:
+      VITE_API_URL: http://milkman-app:8081/milkman
+    depends_on:
+      - milkman-app
+    networks:
+      - milkman-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  milkman-network:
+    driver: bridge

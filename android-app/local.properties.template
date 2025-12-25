@@ -1,0 +1,9 @@
+# Replace YourUsername with your actual Windows username
+sdk.dir=C\:\\Users\\YourUsername\\AppData\\Local\\Android\\Sdk
+
+# Alternative: Set the path where your Android SDK is installed
+# Example for custom location:
+# sdk.dir=C\:\\Android\\Sdk
+
+# Note: This file should not be committed to version control
+# It contains machine-specific paths

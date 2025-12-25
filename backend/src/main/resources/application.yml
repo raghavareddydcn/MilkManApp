@@ -1,0 +1,75 @@
+logging:
+  level:
+    root: INFO
+    com:
+      app:
+        milkman: INFO
+      zaxxer:
+        hikari: WARN
+    org:
+      springframework:
+        web: INFO
+        security: WARN
+        jdbc: WARN
+      hibernate:
+        SQL: ERROR
+        type:
+          descriptor:
+            sql:
+              BasicBinder: ERROR
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/milkman
+    username: postgres
+    password: Welcome@1234
+    initialization-mode: always
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        default_schema: milkman
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: raghavareddy.dcn@gmail.com
+    password: wtrh ayjz wsza bsqs
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+
+server:
+  servlet:
+    contextPath: /milkman
+  port: 8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: milkman
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true

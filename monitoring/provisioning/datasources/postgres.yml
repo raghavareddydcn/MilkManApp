@@ -1,0 +1,17 @@
+apiVersion: 1
+
+datasources:
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    url: milkman-postgres:5432
+    database: milkman
+    user: postgres
+    jsonData:
+      database: milkman
+      sslmode: 'disable'
+      postgresVersion: 1500
+      timescaledb: false
+    secureJsonData:
+      password: 'Welcome@1234'
+    editable: false

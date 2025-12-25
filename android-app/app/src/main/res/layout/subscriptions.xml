@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content">
+
+
+    <TextView
+            android:text="Products"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:id="@+id/tvProducts" android:layout_weight="1"/>
+    <TextView
+            android:text="Subscription "
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:id="@+id/tvSubscription" android:layout_weight="1"/>
+    <TextView
+            android:text="slots"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:id="@+id/tvSlots" android:layout_weight="1"/>
+    <TextView
+            android:text="days"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:id="@+id/tvDays" android:layout_weight="1"/>
+</LinearLayout>
