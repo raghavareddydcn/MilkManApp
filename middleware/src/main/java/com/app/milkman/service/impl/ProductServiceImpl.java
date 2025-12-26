@@ -36,6 +36,33 @@ public class ProductServiceImpl implements ProductService {
         log.info("[Product Registration] Starting registration for product: {}", productReg.getProductName());
 
         ProductRegResponse response = ProductRegResponse.builder().productName(productReg.getProductName()).build();
+        
+        // Validate required fields
+        if (!StringUtils.hasText(productReg.getProductName())) {
+            log.warn("[Product Registration] Missing required field: productName");
+            response.setStatus(FAILED);
+            response.setStatusCode("400");
+            response.setErrorMsg("Product name is required");
+            return response;
+        }
+        
+        if (productReg.getPrice() == null) {
+            log.warn("[Product Registration] Missing required field: price");
+            response.setStatus(FAILED);
+            response.setStatusCode("400");
+            response.setErrorMsg("Product price is required");
+            return response;
+        }
+        
+        // Validate price is positive
+        if (productReg.getPrice() <= 0) {
+            log.warn("[Product Registration] Invalid price: {}", productReg.getPrice());
+            response.setStatus(FAILED);
+            response.setStatusCode("400");
+            response.setErrorMsg("Product price must be greater than zero");
+            return response;
+        }
+        
         try {
             Products product = new Products();
             product.setProductId(UUID.randomUUID().toString());
@@ -76,11 +103,30 @@ public class ProductServiceImpl implements ProductService {
     public ProductRegResponse updateProduct(ProductRegRequest productReg) {
         log.info("[Product Update] Updating product with ID: {}", productReg.getProductId());
 
+        ProductRegResponse response = ProductRegResponse.builder().
+                productId(productReg.getProductId()).build();
+        
+        // Validate product ID
+        if (!StringUtils.hasText(productReg.getProductId())) {
+            log.warn("[Product Update] Missing required field: productId");
+            response.setStatus(FAILED);
+            response.setStatusCode("400");
+            response.setErrorMsg("Product ID is required");
+            return response;
+        }
+        
+        // Validate price if provided
+        if (productReg.getPrice() != null && productReg.getPrice() <= 0) {
+            log.warn("[Product Update] Invalid price: {}", productReg.getPrice());
+            response.setStatus(FAILED);
+            response.setStatusCode("400");
+            response.setErrorMsg("Product price must be greater than zero");
+            return response;
+        }
+        
         // Fetch product from DB
         Products product = productsRepository.findByProductId(productReg.getProductId());
 
-        ProductRegResponse response = ProductRegResponse.builder().
-                productId(productReg.getProductId()).build();
         if (ObjectUtils.isEmpty(product)) {
             log.warn("[Product Update] Product not found with ID: {}", productReg.getProductId());
             //Error response

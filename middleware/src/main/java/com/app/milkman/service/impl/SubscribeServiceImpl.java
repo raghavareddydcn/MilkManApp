@@ -41,53 +41,121 @@ public class SubscribeServiceImpl implements SubscribeService {
     public SubscribeResponse subscribe(SubscribeRequest subscribeRequest) {
         log.info("[Subscription Creation] Creating subscription for customer ID: {}", subscribeRequest.getCustomerId());
 
-        Customers customers = customersRepository.findByCustomerId(subscribeRequest.getCustomerId());
-
-        Subscriptions subscriptions = new Subscriptions();
-        subscriptions.setSubscriptionId(UUID.randomUUID().toString());
-
-        // customer details
-        subscriptions.setCustomerId(customers.getCustomerId());
-        subscriptions.setCustomerName(customers.getFirstName() + " " + customers.getLastName());
-        subscriptions.setPrimaryPhone(customers.getPrimaryPhone());
-        subscriptions.setEmailId(customers.getEmailId());
-        subscriptions.setAddress(customers.getAddress());
-        subscriptions.setPinCode(customers.getPinCode());
-        subscriptions.setLandmark(customers.getLandmark());
-
-        //subscription detail
-        subscriptions.setOrderDateTime(LocalDateTime.now());
-        subscriptions.setDeliveryTimeSlot(subscribeRequest.getDeliveryTimeSlot());
-        subscriptions.setDeliveryStartDate(subscribeRequest.getDeliveryStartDate());
-        subscriptions.setDeliveryEndDate(subscribeRequest.getDeliveryEndDate());
-        subscriptions.setDeliveryFrequency(subscribeRequest.getDeliveryFrequency());
-        subscriptions.setDeliveryDays(String.join(", ", subscribeRequest.getDeliveryDays()));
-        subscriptions.setDeliveryCharge(BigDecimal.valueOf(subscribeRequest.getDeliveryCharge()));
-        subscriptions.setOrderStatus(ORDER_PLACED);
-        subscriptions.setStatus(ACTIVE);
-        subscriptions.setCreatedBy(subscriptions.getCustomerName());
-        subscriptions.setCreatedTime(LocalDateTime.now());
-        subscriptions.setUpdatedBy(subscriptions.getCustomerName());
-        subscriptions.setUpdatedTime(LocalDateTime.now());
-        //get product details
-        List<ProductSubscriptions> productSubscriptions = getProductOrders(subscribeRequest.getProductOrderReqs(), subscriptions);
-        double orderTotal = productSubscriptions.stream().mapToDouble(po -> po.getProductPrice().multiply(BigDecimal.valueOf(po.getQuantity())).doubleValue())
-                .sum() + subscribeRequest.getDeliveryCharge();
-        subscriptions.setOrderTotal(BigDecimal.valueOf(orderTotal));
-
-        Subscriptions subscriptionDetails = subscriptionRepository.save(subscriptions);
-        List<ProductSubscriptions> saveProductOrders = productSubscriptionsRepository.saveAll(productSubscriptions);
+        // Validate required fields
+        if (subscribeRequest.getCustomerId() == null || subscribeRequest.getCustomerId().trim().isEmpty()) {
+            log.warn("[Subscription Creation] Missing required field: customerId");
+            return SubscribeResponse.builder()
+                    .status(FAILED)
+                    .statusCode("400")
+                    .errorMsg("Customer ID is required")
+                    .build();
+        }
         
-        log.info("[Subscription Creation] Successfully created subscription ID: {} for customer: {} with {} products, Total: {} (from {} to {})", 
-                 subscriptionDetails.getSubscriptionId(), subscriptionDetails.getCustomerName(), 
-                 saveProductOrders.size(), subscriptionDetails.getOrderTotal(),
-                 subscriptionDetails.getDeliveryStartDate(), subscriptionDetails.getDeliveryEndDate());
+        if (subscribeRequest.getProductOrderReqs() == null || subscribeRequest.getProductOrderReqs().isEmpty()) {
+            log.warn("[Subscription Creation] Missing required field: products");
+            return SubscribeResponse.builder()
+                    .status(FAILED)
+                    .statusCode("400")
+                    .errorMsg("At least one product is required")
+                    .build();
+        }
+        
+        if (subscribeRequest.getDeliveryStartDate() == null) {
+            log.warn("[Subscription Creation] Missing required field: deliveryStartDate");
+            return SubscribeResponse.builder()
+                    .status(FAILED)
+                    .statusCode("400")
+                    .errorMsg("Delivery start date is required")
+                    .build();
+        }
+        
+        if (subscribeRequest.getDeliveryEndDate() == null) {
+            log.warn("[Subscription Creation] Missing required field: deliveryEndDate");
+            return SubscribeResponse.builder()
+                    .status(FAILED)
+                    .statusCode("400")
+                    .errorMsg("Delivery end date is required")
+                    .build();
+        }
+        
+        // Validate end date is after start date
+        if (subscribeRequest.getDeliveryEndDate().isBefore(subscribeRequest.getDeliveryStartDate())) {
+            log.warn("[Subscription Creation] Invalid dates: end date {} is before start date {}", 
+                     subscribeRequest.getDeliveryEndDate(), subscribeRequest.getDeliveryStartDate());
+            return SubscribeResponse.builder()
+                    .status(FAILED)
+                    .statusCode("400")
+                    .errorMsg("Delivery end date must be after start date")
+                    .build();
+        }
 
-        //Response generation
-        SubscribeResponse response = SubscribeResponse.builder().subscriptionId(subscriptions.getSubscriptionId()).build();
-        response.setStatus(SUCCESS);
-        response.setStatusCode(SUCCESS_CODE);
-        return response;
+        // Fetch and validate customer exists
+        Customers customers = customersRepository.findByCustomerId(subscribeRequest.getCustomerId());
+        if (customers == null) {
+            log.warn("[Subscription Creation] Customer not found with ID: {}", subscribeRequest.getCustomerId());
+            return SubscribeResponse.builder()
+                    .status(FAILED)
+                    .statusCode("404")
+                    .errorMsg("Customer not found")
+                    .build();
+        }
+
+        try {
+            Subscriptions subscriptions = new Subscriptions();
+            subscriptions.setSubscriptionId(UUID.randomUUID().toString());
+
+            // customer details
+            subscriptions.setCustomerId(customers.getCustomerId());
+            subscriptions.setCustomerName(customers.getFirstName() + " " + customers.getLastName());
+            subscriptions.setPrimaryPhone(customers.getPrimaryPhone());
+            subscriptions.setEmailId(customers.getEmailId());
+            subscriptions.setAddress(customers.getAddress());
+            subscriptions.setPinCode(customers.getPinCode());
+            subscriptions.setLandmark(customers.getLandmark());
+
+            //subscription detail
+            subscriptions.setOrderDateTime(LocalDateTime.now());
+            subscriptions.setDeliveryTimeSlot(subscribeRequest.getDeliveryTimeSlot());
+            subscriptions.setDeliveryStartDate(subscribeRequest.getDeliveryStartDate());
+            subscriptions.setDeliveryEndDate(subscribeRequest.getDeliveryEndDate());
+            subscriptions.setDeliveryFrequency(subscribeRequest.getDeliveryFrequency());
+            subscriptions.setDeliveryDays(String.join(", ", subscribeRequest.getDeliveryDays()));
+            subscriptions.setDeliveryCharge(BigDecimal.valueOf(subscribeRequest.getDeliveryCharge()));
+            subscriptions.setOrderStatus(ORDER_PLACED);
+            subscriptions.setStatus(ACTIVE);
+            subscriptions.setCreatedBy(subscriptions.getCustomerName());
+            subscriptions.setCreatedTime(LocalDateTime.now());
+            subscriptions.setUpdatedBy(subscriptions.getCustomerName());
+            subscriptions.setUpdatedTime(LocalDateTime.now());
+            
+            //get product details
+            List<ProductSubscriptions> productSubscriptions = getProductOrders(subscribeRequest.getProductOrderReqs(), subscriptions);
+            double orderTotal = productSubscriptions.stream().mapToDouble(po -> po.getProductPrice().multiply(BigDecimal.valueOf(po.getQuantity())).doubleValue())
+                    .sum() + subscribeRequest.getDeliveryCharge();
+            subscriptions.setOrderTotal(BigDecimal.valueOf(orderTotal));
+
+            Subscriptions subscriptionDetails = subscriptionRepository.save(subscriptions);
+            List<ProductSubscriptions> saveProductOrders = productSubscriptionsRepository.saveAll(productSubscriptions);
+            
+            log.info("[Subscription Creation] Successfully created subscription ID: {} for customer: {} with {} products, Total: {} (from {} to {})", 
+                     subscriptionDetails.getSubscriptionId(), subscriptionDetails.getCustomerName(), 
+                     saveProductOrders.size(), subscriptionDetails.getOrderTotal(),
+                     subscriptionDetails.getDeliveryStartDate(), subscriptionDetails.getDeliveryEndDate());
+
+            //Response generation
+            SubscribeResponse response = SubscribeResponse.builder().subscriptionId(subscriptions.getSubscriptionId()).build();
+            response.setStatus(SUCCESS);
+            response.setStatusCode(SUCCESS_CODE);
+            return response;
+        } catch (Exception e) {
+            log.error("[Subscription Creation] Failed to create subscription for customer: {} - Error: {}", 
+                      subscribeRequest.getCustomerId(), e.getMessage(), e);
+            return SubscribeResponse.builder()
+                    .status(FAILED)
+                    .statusCode(INTERNAL_ERROR_CODE)
+                    .errorMsg(e.getMessage())
+                    .build();
+        }
     }
 
     private List<ProductSubscriptions> getProductOrders(List<ProductOrdersReq> productOrderReq, Subscriptions subscriptions) {
