@@ -21,12 +21,28 @@ class APIClient {
             headers['Authorization'] = `Bearer ${this.accessToken}`;
         }
 
-        return axios.create({
+        const instance = axios.create({
             baseURL: this.baseURL,
             timeout: this.timeout,
             headers: headers,
             validateStatus: () => true // Don't throw on any status code
         });
+
+        // Intercept response to map logical 'statusCode' (e.g. "401") in body to HTTP status (response.status)
+        instance.interceptors.response.use(response => {
+            if (response.status === 200 && response.data && response.data.statusCode) {
+                const logicalCode = parseInt(response.data.statusCode, 10);
+                if (!isNaN(logicalCode) && logicalCode !== 200) {
+                    response.status = logicalCode;
+                }
+            }
+            return response;
+        }, error => {
+            // Handle network errors etc
+            return Promise.reject(error);
+        });
+
+        return instance;
     }
 
     /**

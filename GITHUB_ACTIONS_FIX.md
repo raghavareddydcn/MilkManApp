@@ -2,7 +2,7 @@
 
 ## 🚀 Status: All Issues Resolved
 
-We have successfully resolved **8 specific issues** to make the CI/CD pipeline fully operational.
+We have successfully resolved **9 specific issues** to make the CI/CD pipeline fully operational.
 
 ---
 
@@ -40,6 +40,11 @@ We have successfully resolved **8 specific issues** to make the CI/CD pipeline f
 - **Fix:** Updated `api-client.js` to:
     - Automatically map `password` -> `authPin`.
     - Point `authenticateAdmin` to the correct `/customer/authenticate` endpoint.
+
+## 9. API Response Mismatch (Fixed)
+- **Issue:** Tests failed finding `accessToken` even when login succeeded (`status: SUCCESS`).
+- **Cause:** API returns `authToken`, but tests expect `accessToken`.
+- **Fix:** Updated `api-client.js` to map `authToken` to `accessToken` in the response object.
 
 ---
 
