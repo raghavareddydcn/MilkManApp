@@ -85,8 +85,7 @@ public class Subscriptions implements Serializable {
 
     @Column(name = "ordertotal", nullable = false)
     private BigDecimal orderTotal;
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "subscriptionid", referencedColumnName = "subscriptionid")
+    @OneToMany(mappedBy = "subscriptions", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<ProductSubscriptions> productSubscriptions;
 
 }

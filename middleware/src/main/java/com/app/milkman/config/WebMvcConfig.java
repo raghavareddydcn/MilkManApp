@@ -20,6 +20,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/customer/register",
                         "/customer/authenticate",
                         "/customer/refresh-token",
+                        "/customer/*",
                         "/actuator/**",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",

@@ -11,4 +11,7 @@ public interface SubscribeService {
     SubscribeResponse subscribe(SubscribeRequest subscribeRequest);
     List<SubscriptionDetails> getAllOrders(Pageable pageable);
     List<SubscriptionDetails> getAllSubscriptionsByCustomerId(String customerId, Pageable pageable);
+    List<SubscriptionDetails> getAllSubscriptionsByPhone(String phoneNo, Pageable pageable);
+    SubscribeResponse updateSubscription(SubscribeRequest subscribeRequest);
+    void deleteSubscription(String subscriptionId);
 }

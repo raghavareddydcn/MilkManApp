@@ -1,0 +1,48 @@
+﻿<!DOCTYPE html>
+<html>
+<head><title>Login Test</title></head>
+<body>
+<h2>Testing Login Flow</h2>
+<div id="output"></div>
+<script>
+async function testLogin() {
+    const output = document.getElementById('output');
+    output.innerHTML = '<p>Starting login test...</p>';
+    
+    try {
+        const response = await fetch('http://localhost:8081/milkman/customer/authenticate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ emailIdOrPhone: '9566085621', authPin: 'admin' })
+        });
+        
+        const data = await response.json();
+        output.innerHTML += '<h3>API Response:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        
+        if (data.status === 'SUCCESS') {
+            const customer = {
+                customerId: data.customerId,
+                customerName: data.customerName,
+                role: data.role
+            };
+            
+            localStorage.setItem('token', data.authToken);
+            localStorage.setItem('refreshToken', data.refreshToken);
+            localStorage.setItem('user', JSON.stringify(customer));
+            
+            output.innerHTML += '<h3>Stored in localStorage:</h3><pre>' + JSON.stringify({
+                token: data.authToken.substring(0, 50) + '...',
+                user: customer
+            }, null, 2) + '</pre>';
+            
+            output.innerHTML += '<h3>Check if Admin:</h3><p>Role is: ' + customer.role + '</p>';
+            output.innerHTML += '<p>Is ADMIN? ' + (customer.role === 'ADMIN') + '</p>';
+        }
+    } catch (error) {
+        output.innerHTML += '<p style="color:red">Error: ' + error.message + '</p>';
+    }
+}
+testLogin();
+</script>
+</body>
+</html>

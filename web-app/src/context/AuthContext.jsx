@@ -61,56 +61,67 @@ export const AuthProvider = ({ children }) => {
 
   const dismissWarning = useCallback(() => {
     setShowSessionWarning(false)
-    resetSessionTimer()
   }, [])
 
-  // Activity tracking
-  const lastActivityRef = useActivityTracker(() => {
-    if (user) {
-      resetSessionTimer()
-      localStorage.setItem('lastActivity', Date.now().toString())
-    }
-  })
+  // Activity tracking - DISABLED
+  const lastActivityRef = null
 
-  // Session timeout management
-  const { resetTimer: resetSessionTimer, clearTimers } = useSessionTimeout({
-    timeoutMinutes: 30,
-    warningMinutes: 2,
-    onTimeout: handleSessionTimeout,
-    onWarning: handleWarning,
-    enabled: !!user
-  })
+  // Session timeout management - DISABLED
+  const resetSessionTimer = useCallback(() => {
+    // Session timeout disabled
+  }, [])
+  
+  const clearTimers = useCallback(() => {
+    // Session timeout disabled
+  }, [])
 
-  // Session cleanup on browser close
-  useSessionCleanup(true)
+  // Session cleanup on browser close - DISABLED
+  // useSessionCleanup(true)
 
   const login = async (phoneNumber, authPin) => {
     try {
       const response = await authAPI.authenticate({ emailIdOrPhone: phoneNumber, authPin })
-      const { authToken, refreshToken, customerName, customerId, status } = response.data
+      const { authToken, refreshToken, customerName, customerId, role, status } = response.data
+      console.log('  - customerName:', customerName, typeof customerName)
+      console.log('  - role:', role, typeof role)
+      console.log('  - status:', status, typeof status)
+      console.log('  - authToken exists:', !!authToken)
+      console.log('  - refreshToken exists:', !!refreshToken)
       
       if (status === 'SUCCESS' && authToken) {
+        console.log('✅ Status is SUCCESS, proceeding with storage...')
+        
         localStorage.setItem('token', authToken)
         localStorage.setItem('refreshToken', refreshToken)
         localStorage.setItem('lastActivity', Date.now().toString())
         localStorage.removeItem('sessionExpired')
         
-        const customer = { customerId, customerName }
-        localStorage.setItem('user', JSON.stringify(customer))
-        setUser(customer)
+        const customer = { customerId, customerName, role }
         
-        // Start session timer
-        resetSessionTimer()
+        console.log('👤 CUSTOMER OBJECT TO STORE:')
+        console.log('  Object:', customer)
+        console.log('  JSON:', JSON.stringify(customer))
+        console.log('  role field present?', 'role' in customer)
+        console.log('  role value:', customer.role)
+        console.log('  role === "ADMIN"?', customer.role === 'ADMIN')
+        
+        const jsonString = JSON.stringify(customer)
+        localStorage.setItem('user', jsonString)
+        console.log('✅ Login successful -', customer.customerName, '| Role:', customer.role)
+        
+        setUser(customer)
         
         return { success: true }
       } else {
+        console.error('❌ Login failed - status:', status)
         return { 
           success: false, 
           message: 'Invalid credentials' 
         }
       }
     } catch (error) {
-      console.error('Login error:', error)
+      console.error('❌ LOGIN ERROR:', error)
+      console.error('Error details:', error.response?.data)
       return { 
         success: false, 
         message: error.response?.data?.message || 'Login failed' 
@@ -124,7 +135,7 @@ export const AuthProvider = ({ children }) => {
   }, [clearTimers, handleLogout])
 
   const isAdmin = () => {
-    return user?.emailId === 'admin@milkman.com' || user?.customerId === 'ADMIN001'
+    return user?.role === 'ADMIN'
   }
 
   return (

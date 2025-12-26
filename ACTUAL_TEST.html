@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Actual Login Test - MilkMan</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f0f0f0; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }
+        button { background: #4CAF50; color: white; padding: 10px 20px; border: none; cursor: pointer; margin: 10px 5px; }
+        button:hover { background: #45a049; }
+        .output { background: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 4px; max-height: 400px; overflow-y: auto; }
+        pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 MilkMan Login Test - Step by Step</h1>
+        <p>This will test the ACTUAL login flow and show you exactly what's happening</p>
+        
+        <div>
+            <button onclick="clearEverything()">1. Clear Everything</button>
+            <button onclick="testAdminLogin()">2. Login as Admin</button>
+            <button onclick="checkStorage()">3. Check Storage</button>
+            <button onclick="openActualApp()">4. Open Real App</button>
+        </div>
+        
+        <div id="output" class="output">
+            <p class="info">Click buttons in order to test...</p>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const p = document.createElement('p');
+            p.className = type;
+            p.textContent = message;
+            output.appendChild(p);
+            console.log(message);
+        }
+
+        function clearEverything() {
+            document.getElementById('output').innerHTML = '';
+            localStorage.clear();
+            sessionStorage.clear();
+            log('✅ Cleared all storage', 'success');
+            log('LocalStorage: ' + JSON.stringify(localStorage), 'info');
+        }
+
+        async function testAdminLogin() {
+            log('🔐 Starting Admin Login Test...', 'info');
+            log('Calling: http://localhost:8081/milkman/customer/authenticate', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:8081/milkman/customer/authenticate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        emailIdOrPhone: '9566085621',
+                        authPin: 'admin'
+                    })
+                });
+
+                const data = await response.json();
+                log('📦 API Response Status: ' + data.status, data.status === 'SUCCESS' ? 'success' : 'error');
+                log('Response Data:', 'info');
+                log(JSON.stringify(data, null, 2), 'info');
+
+                if (data.status === 'SUCCESS') {
+                    const customer = {
+                        customerId: data.customerId,
+                        customerName: data.customerName,
+                        role: data.role
+                    };
+
+                    log('Storing tokens...', 'info');
+                    localStorage.setItem('token', data.authToken);
+                    localStorage.setItem('refreshToken', data.refreshToken);
+                    localStorage.setItem('user', JSON.stringify(customer));
+                    localStorage.setItem('lastActivity', Date.now().toString());
+
+                    log('✅ Login Success!', 'success');
+                    log('Customer ID: ' + customer.customerId, 'success');
+                    log('Name: ' + customer.customerName, 'success');
+                    log('Role: ' + customer.role, customer.role === 'ADMIN' ? 'success' : 'error');
+                    log('Is Admin? ' + (customer.role === 'ADMIN'), customer.role === 'ADMIN' ? 'success' : 'error');
+                } else {
+                    log('❌ Login Failed: ' + (data.errorMsg || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                log('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        function checkStorage() {
+            log('📦 Checking localStorage...', 'info');
+            
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            
+            if (!token) {
+                log('❌ No token found!', 'error');
+                return;
+            }
+            
+            if (!userStr) {
+                log('❌ No user data found!', 'error');
+                return;
+            }
+
+            try {
+                const user = JSON.parse(userStr);
+                log('✅ User Data Found:', 'success');
+                log('  Customer ID: ' + user.customerId, 'info');
+                log('  Name: ' + user.customerName, 'info');
+                log('  Role: ' + user.role, user.role === 'ADMIN' ? 'success' : 'error');
+                log('  Is Admin: ' + (user.role === 'ADMIN'), user.role === 'ADMIN' ? 'success' : 'error');
+                log('  Token (first 50 chars): ' + token.substring(0, 50) + '...', 'info');
+                
+                if (user.role === 'ADMIN') {
+                    log('✅✅✅ SHOULD SEE ADMIN DASHBOARD!', 'success');
+                } else {
+                    log('❌ NOT ADMIN - Will see regular user page', 'error');
+                }
+            } catch (error) {
+                log('❌ Error parsing user data: ' + error.message, 'error');
+            }
+        }
+
+        function openActualApp() {
+            log('🚀 Opening real application in new tab...', 'info');
+            log('Make sure to open DevTools (F12) in the new tab to see console logs!', 'info');
+            window.open('http://localhost:3001', '_blank');
+        }
+    </script>
+</body>
+</html>

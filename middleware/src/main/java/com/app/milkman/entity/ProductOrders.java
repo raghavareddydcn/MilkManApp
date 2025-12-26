@@ -21,11 +21,11 @@ public class ProductOrders implements Serializable {
     @Column(name = "product_order_id", nullable = false)
     private String productOrderId;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "orderid", referencedColumnName = "orderid")
     private Orders orders;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "productid", referencedColumnName = "productid")
     private Products products;
 

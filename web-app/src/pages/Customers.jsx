@@ -110,15 +110,20 @@ const Customers = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Customers</h1>
-          <p className="text-gray-600 mt-1">Manage your customer database</p>
+      <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-xl p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Customers</h1>
+            <p className="text-indigo-100">Manage your customer database</p>
+          </div>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-indigo-50 transition-colors shadow-lg"
+          >
+            <Plus className="w-5 h-5" />
+            <span className="font-bold">Add Customer</span>
+          </button>
         </div>
-        <button onClick={() => setShowModal(true)} className="btn-primary flex items-center space-x-2">
-          <Plus className="w-5 h-5" />
-          <span>Add Customer</span>
-        </button>
       </div>
 
       {/* Search Bar */}

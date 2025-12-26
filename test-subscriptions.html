@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Subscriptions API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #ff5722;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .success { color: #4caf50; }
+        .error { color: #f44336; }
+        .warning { color: #ff9800; }
+        .info { color: #2196f3; }
+        h2 { color: #333; border-bottom: 2px solid #ff6b35; padding-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🧪 Test Subscriptions API</h2>
+        
+        <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-radius: 6px;" id="loginSection">
+            <strong>⚠️ Login Required:</strong>
+            <button onclick="loginAsAdmin()" style="background: #28a745;">🔐 Login as Admin</button>
+            <button onclick="loginAsCustomer()" style="background: #17a2b8;">🔐 Login as Customer</button>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <button onclick="testGetSubscriptions()">1. Get All Subscriptions</button>
+            <button onclick="testSubscriptionStructure()">2. Check Data Structure</button>
+            <button onclick="testCreateSubscription()">3. Test Create</button>
+            <button onclick="clearOutput()">Clear Output</button>
+        </div>
+
+        <div id="output" class="output"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8081/milkman';
+        let token = localStorage.getItem('token');
+
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                success: '#4caf50',
+                error: '#f44336',
+                warning: '#ff9800',
+                info: '#2196f3'
+            };
+            output.innerHTML += `<div style="color: ${colors[type]}">[${timestamp}] ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput() {
+            document.getElementById('output').innerHTML = '';
+        }
+
+        async function loginAsAdmin() {
+            log('🔐 Logging in as ADMIN...', 'info');
+            await login('9566085621', '1234');
+        }
+
+        async function loginAsCustomer() {
+            log('🔐 Logging in as CUSTOMER...', 'info');
+            await login('9876543210', '5678');
+        }
+
+        async function login(phone, pin) {
+            try {
+                const response = await fetch(`${API_BASE}/customer/authenticate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        primaryPhone: phone,
+                        authPin: pin
+                    })
+                });
+
+                if (!response.ok) {
+                    log(`❌ Login failed: ${response.status}`, 'error');
+                    const errorText = await response.text();
+                    log(`Error: ${errorText}`, 'error');
+                    return;
+                }
+
+                const data = await response.json();
+                log(`✅ Login successful!`, 'success');
+                log(`Response: ${JSON.stringify(data, null, 2)}`, 'info');
+
+                // Store token
+                if (data.authToken) {
+                    localStorage.setItem('token', data.authToken);
+                    localStorage.setItem('refreshToken', data.refreshToken);
+                    token = data.authToken;
+                    
+                    const user = {
+                        customerId: data.customerId,
+                        customerName: data.customerName,
+                        role: data.role
+                    };
+                    localStorage.setItem('user', JSON.stringify(user));
+
+                    log(`✅ Token saved to localStorage`, 'success');
+                    log(`👤 User: ${data.customerName} (${data.role})`, 'success');
+                    
+                    // Update UI
+                    document.getElementById('loginSection').style.background = '#d4edda';
+                    document.getElementById('loginSection').innerHTML = 
+                        `<strong>✅ Logged in as: ${data.customerName} (${data.role})</strong>`;
+                } else {
+                    log(`⚠️ No token in response!`, 'warning');
+                }
+
+            } catch (error) {
+                log(`❌ ERROR: ${error.message}`, 'error');
+                console.error('Full error:', error);
+            }
+        }
+
+        async function testGetSubscriptions() {
+            log('📡 Fetching all subscriptions...', 'info');
+            
+            if (!token) {
+                log('❌ No token found! Please login first.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/subscribe/getAllSubscriptions`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                log(`Status: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log(`Error Response: ${errorText}`, 'error');
+                    return;
+                }
+
+                const data = await response.json();
+                log(`✅ SUCCESS! Received ${Array.isArray(data) ? data.length : 0} subscriptions`, 'success');
+                log(`Full Response: ${JSON.stringify(data, null, 2)}`, 'info');
+
+                if (Array.isArray(data) && data.length > 0) {
+                    log(`\n📋 First Subscription Details:`, 'info');
+                    const first = data[0];
+                    log(`  - subscriptionId: ${first.subscriptionId}`, 'success');
+                    log(`  - customerId: ${first.customerId}`, 'info');
+                    log(`  - customerName: ${first.customerName}`, 'info');
+                    log(`  - orderStatus: ${first.orderStatus}`, 'info');
+                    log(`  - deliveryFrequency: ${first.deliveryFrequency}`, 'info');
+                    log(`  - deliveryStartDate: ${first.deliveryStartDate}`, 'info');
+                    
+                    if (first.subscriptionProductDetails && first.subscriptionProductDetails.length > 0) {
+                        log(`  - Products: ${first.subscriptionProductDetails.length} items`, 'success');
+                        first.subscriptionProductDetails.forEach((p, i) => {
+                            log(`    ${i+1}. ${p.productName} (${p.quantity} x ₹${p.productPrice})`, 'info');
+                        });
+                    }
+                } else {
+                    log('⚠️ No subscriptions found or empty array returned', 'warning');
+                }
+
+            } catch (error) {
+                log(`❌ ERROR: ${error.message}`, 'error');
+                console.error('Full error:', error);
+            }
+        }
+
+        async function testSubscriptionStructure() {
+            log('🔍 Analyzing subscription data structure...', 'info');
+            
+            if (!token) {
+                log('❌ No token found! Please login first.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/subscribe/getAllSubscriptions`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    log(`❌ HTTP Error: ${response.status}`, 'error');
+                    return;
+                }
+
+                const data = await response.json();
+                
+                log(`\n📊 DATA STRUCTURE ANALYSIS:`, 'info');
+                log(`- Type: ${typeof data}`, 'info');
+                log(`- Is Array: ${Array.isArray(data)}`, 'info');
+                log(`- Length: ${Array.isArray(data) ? data.length : 'N/A'}`, 'info');
+                
+                if (Array.isArray(data) && data.length > 0) {
+                    const sample = data[0];
+                    log(`\n🔑 KEYS in first subscription:`, 'info');
+                    Object.keys(sample).forEach(key => {
+                        const value = sample[key];
+                        const type = typeof value;
+                        const preview = type === 'object' ? 
+                            (Array.isArray(value) ? `Array[${value.length}]` : 'Object') :
+                            value;
+                        log(`  ${key}: ${type} = ${preview}`, 'success');
+                    });
+
+                    // Check specifically for ID fields
+                    log(`\n🆔 ID FIELD CHECK:`, 'warning');
+                    log(`  subscriptionId: ${sample.subscriptionId !== undefined ? '✅ EXISTS' : '❌ MISSING'}`, 
+                        sample.subscriptionId !== undefined ? 'success' : 'error');
+                    log(`  subscription_id: ${sample.subscription_id !== undefined ? '✅ EXISTS' : '❌ MISSING'}`, 
+                        sample.subscription_id !== undefined ? 'success' : 'error');
+                    log(`  id: ${sample.id !== undefined ? '✅ EXISTS' : '❌ MISSING'}`, 
+                        sample.id !== undefined ? 'success' : 'error');
+                    log(`  subId: ${sample.subId !== undefined ? '✅ EXISTS' : '❌ MISSING'}`, 
+                        sample.subId !== undefined ? 'success' : 'error');
+
+                    if (sample.subscriptionId) {
+                        log(`\n✅ GOOD NEWS: subscriptionId is present!`, 'success');
+                        log(`   Value: "${sample.subscriptionId}"`, 'success');
+                        log(`   Type: ${typeof sample.subscriptionId}`, 'info');
+                    } else {
+                        log(`\n❌ PROBLEM: subscriptionId is missing or undefined!`, 'error');
+                        log(`   Checking all possible ID fields...`, 'warning');
+                        log(`   All keys: ${Object.keys(sample).join(', ')}`, 'info');
+                    }
+                }
+
+            } catch (error) {
+                log(`❌ ERROR: ${error.message}`, 'error');
+                console.error('Full error:', error);
+            }
+        }
+
+        async function testCreateSubscription() {
+            log('🧪 Testing subscription creation...', 'info');
+            
+            if (!token) {
+                log('❌ No token found! Please login first.', 'error');
+                return;
+            }
+
+            // First get a customer and product
+            try {
+                log('Fetching customers...', 'info');
+                const customersRes = await fetch(`${API_BASE}/customer/getAll`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const customers = await customersRes.json();
+                
+                log('Fetching products...', 'info');
+                const productsRes = await fetch(`${API_BASE}/product/getProducts`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const products = await productsRes.json();
+
+                if (customers.length === 0 || products.length === 0) {
+                    log('❌ No customers or products found to create test subscription', 'error');
+                    return;
+                }
+
+                const testData = {
+                    customerId: customers[0].customerid,
+                    productIds: [products[0].productid],
+                    subscriptionStartDate: new Date().toISOString().split('T')[0],
+                    subscriptionEndDate: '',
+                    frequency: 'DAILY',
+                    status: 'ACTIVE'
+                };
+
+                log(`Test data: ${JSON.stringify(testData, null, 2)}`, 'info');
+                log('Creating subscription...', 'info');
+
+                const response = await fetch(`${API_BASE}/subscribe/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                const result = await response.json();
+                log(`Response: ${JSON.stringify(result, null, 2)}`, response.ok ? 'success' : 'error');
+
+            } catch (error) {
+                log(`❌ ERROR: ${error.message}`, 'error');
+                console.error('Full error:', error);
+            }
+        }
+
+        // Check for token on load
+        window.onload = function() {
+            if (token) {
+                log('✅ Token found in localStorage', 'success');
+                log(`Token: ${token.substring(0, 30)}...`, 'info');
+            } else {
+                log('⚠️ No token found. Please login first!', 'warning');
+                log('You can login at: http://localhost:3001/login', 'info');
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Subscription API</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        button { background: #ff6b35; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 10px 5px; }
+        button:hover { background: #ff5520; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        .error { color: red; }
+        .success { color: green; }
+        input { padding: 8px; width: 300px; margin: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Subscription API Tester</h1>
+        
+        <div>
+            <label>Token:</label><br>
+            <input type="text" id="token" placeholder="Paste your JWT token here">
+        </div>
+        
+        <button onclick="testGetSubscriptions()">Test GET /getAllSubscriptions</button>
+        <button onclick="clearResults()">Clear</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function testGetSubscriptions() {
+            const token = document.getElementById('token').value;
+            const results = document.getElementById('results');
+            
+            if (!token) {
+                // Try to get from localStorage
+                const storedToken = localStorage.getItem('token');
+                if (storedToken) {
+                    document.getElementById('token').value = storedToken;
+                    return testGetSubscriptions();
+                } else {
+                    results.innerHTML = '<p class="error">❌ Please enter a token or login first at <a href="http://localhost:3001" target="_blank">localhost:3001</a></p>';
+                    return;
+                }
+            }
+            
+            results.innerHTML = '<p>⏳ Fetching subscriptions...</p>';
+            
+            try {
+                console.log('Making request with token:', token.substring(0, 20) + '...');
+                
+                const response = await fetch('http://localhost:8081/milkman/subscribe/getAllSubscriptions', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (response.ok) {
+                    results.innerHTML = `
+                        <h2 class="success">✅ Success!</h2>
+                        <p><strong>Count:</strong> ${data.length} subscriptions</p>
+                        <h3>First Subscription Fields:</h3>
+                        ${data.length > 0 ? `
+                            <pre>${JSON.stringify(data[0], null, 2)}</pre>
+                            <h3>Field Names:</h3>
+                            <pre>${Object.keys(data[0]).join('\n')}</pre>
+                            <h3>subscriptionId Value:</h3>
+                            <pre style="background: #ffffcc;">${data[0].subscriptionId || 'NULL/UNDEFINED'}</pre>
+                        ` : '<p>No subscriptions found</p>'}
+                        <h3>Full Response:</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    results.innerHTML = `<h2 class="error">❌ Error ${response.status}</h2><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                results.innerHTML = `<h2 class="error">❌ Error</h2><pre>${error.message}\n\n${error.stack}</pre>`;
+            }
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        // Auto-load token from localStorage on page load
+        window.addEventListener('load', () => {
+            const storedToken = localStorage.getItem('token');
+            if (storedToken) {
+                document.getElementById('token').value = storedToken;
+                console.log('✅ Token loaded from localStorage');
+            }
+        });
+    </script>
+</body>
+</html>

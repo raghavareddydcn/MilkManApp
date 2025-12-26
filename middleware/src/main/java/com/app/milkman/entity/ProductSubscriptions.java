@@ -21,11 +21,11 @@ public class ProductSubscriptions implements Serializable {
     @Column(name = "product_subscription_id", nullable = false)
     private String productSubscriptionId;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "subscriptionid", referencedColumnName = "subscriptionid")
     private Subscriptions subscriptions;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "productid", referencedColumnName = "productid")
     private Products products;
 

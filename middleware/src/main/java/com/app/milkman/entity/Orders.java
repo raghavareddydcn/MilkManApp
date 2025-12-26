@@ -80,8 +80,7 @@ public class Orders implements Serializable {
     @Column(name = "ordertotal", nullable = false)
     private BigDecimal orderTotal;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "orderid", referencedColumnName = "orderid")
+    @OneToMany(mappedBy = "orders", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<ProductOrders> productOrders;
 
 }

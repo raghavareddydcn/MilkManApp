@@ -27,16 +27,24 @@ const processQueue = (error, token = null) => {
 // Add token to requests if available
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
+  console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`)
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
+    console.log(`🔑 Token attached: ${token.substring(0, 20)}...`)
+  } else {
+    console.warn('⚠️ No token found in localStorage')
   }
   return config
 })
 
 // Handle token refresh on 401 errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`✅ API Response: ${response.config?.method?.toUpperCase()} ${response.config?.url} - Status: ${response.status}`)
+    return response
+  },
   async (error) => {
+    console.error(`❌ API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url} - Status: ${error.response?.status}`, error.response?.data)
     const originalRequest = error.config
 
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -72,10 +80,16 @@ api.interceptors.response.use(
           refreshToken: refreshToken
         })
 
-        const { authToken, refreshToken: newRefreshToken } = response.data
+        const { authToken, refreshToken: newRefreshToken, role, customerId, customerName } = response.data
 
         localStorage.setItem('token', authToken)
         localStorage.setItem('refreshToken', newRefreshToken)
+        
+        // Update user data with refreshed info
+        if (customerId && customerName) {
+          const user = { customerId, customerName, role }
+          localStorage.setItem('user', JSON.stringify(user))
+        }
 
         api.defaults.headers.common['Authorization'] = 'Bearer ' + authToken
         originalRequest.headers['Authorization'] = 'Bearer ' + authToken
@@ -105,9 +119,18 @@ api.interceptors.response.use(
 // Customer APIs
 export const customerAPI = {
   getAll: () => api.get('/customer/getAll'),
-  getById: (id) => api.get(`/customer/${id}`),
+  getById: (id) => {
+    console.log(`🔍 customerAPI.getById(${id})`)
+    return api.get(`/customer/${id}`)
+  },
   create: (customer) => api.post('/customer/register', customer),
-  update: (id, customer) => api.put(`/customer/update`, customer),
+  update: (id, customer) => {
+    console.log(`\n🚀 customerAPI.update() called`)
+    console.log(`🚀 ID parameter:`, id)
+    console.log(`🚀 Customer data:`, JSON.stringify(customer, null, 2))
+    console.log(`🚀 Making PUT request to: /customer/update`)
+    return api.put(`/customer/update`, customer)
+  },
   delete: (id) => api.delete(`/customer/${id}`)
 }
 
@@ -125,8 +148,8 @@ export const orderAPI = {
   getAll: () => api.get('/order/getAllOrders'),
   getById: (id) => api.get(`/order/${id}`),
   create: (order) => api.post('/order/create', order),
-  update: (id, order) => api.put(`/order/${id}`, order),
-  delete: (id) => api.delete(`/order/${id}`)
+  update: (order) => api.put('/order/update', order),
+  delete: (id) => api.delete(`/order/delete/${id}`)
 }
 
 // Subscription APIs
@@ -134,8 +157,8 @@ export const subscriptionAPI = {
   getAll: () => api.get('/subscribe/getAllSubscriptions'),
   getById: (id) => api.get(`/subscribe/${id}`),
   create: (subscription) => api.post('/subscribe/create', subscription),
-  update: (id, subscription) => api.put(`/subscribe/${id}`, subscription),
-  delete: (id) => api.delete(`/subscribe/${id}`)
+  update: (subscription) => api.put('/subscribe/update', subscription),
+  delete: (id) => api.delete(`/subscribe/delete/${id}`)
 }
 
 // Auth APIs

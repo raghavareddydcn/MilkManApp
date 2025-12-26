@@ -93,15 +93,21 @@ const Products = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Products</h1>
-          <p className="text-gray-600 mt-1">Manage your product catalog</p>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Products</h1>
+            <p className="text-green-100">Manage your product catalog</p>
+          </div>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors shadow-lg"
+          >
+            <Plus className="w-5 h-5" />
+            <span className="font-bold">Add Product</span>
+          </button>
         </div>
-        <button onClick={() => setShowModal(true)} className="btn-primary flex items-center space-x-2">
-          <Plus className="w-5 h-5" />
-          <span>Add Product</span>
-        </button>
       </div>
 
       <div className="relative">

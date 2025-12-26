@@ -48,6 +48,10 @@ npm run preview  # Test production build
 
 **API proxy**: Vite proxies `/milkman` to backend (see [vite.config.js](web-app/vite.config.js)). In Docker, it targets `milkman-app:8081`; locally targets `localhost:8081`.
 
+**Key files**:
+- [api.js](web-app/src/services/api.js) - Axios instance with interceptor pattern for token refresh
+- [AuthContext.jsx](web-app/src/context/AuthContext.jsx) - Global auth state with activity tracking hooks
+
 ### Android App
 ```bash
 cd android-app
@@ -64,13 +68,15 @@ cd android-app
 - **Refresh token**: 7 days validity (stored in `localStorage`)
 - Tokens issued by [JWTService.java](middleware/src/main/java/com/app/milkman/component/JWTService.java)
 
-**Frontend flow** ([api.js](web-app/services/api.js)):
+**Frontend flow** ([api.js](web-app/src/services/api.js)):
 - Axios interceptor adds `Authorization: Bearer <token>` header
 - On 401, attempts auto-refresh using refresh token
-- Queue failed requests during refresh
+- Queue failed requests during refresh to prevent duplicate requests
 - Session timeout warnings via [AuthContext.jsx](web-app/context/AuthContext.jsx) hooks
+- Activity tracking updates `lastActivity` in `localStorage` on user interaction
 
 **Backend**: All controllers use `@RequestHeader("Authorization")` to extract and validate JWT.
+**Role-based access**: `@RequireRole({"ADMIN"})` annotation restricts endpoints (see [CustomerController.java](middleware/src/main/java/com/app/milkman/controller/CustomerController.java#L54)).
 
 ## Database Conventions
 
@@ -101,9 +107,12 @@ Standard Spring Boot 3-tier:
 **DTOs**: Request/response models in `model/` package separate from JPA `entity/` classes.
 
 ### Web App State Management
-- **Global auth**: [AuthContext.jsx](web-app/context/AuthContext.jsx) with React Context
+- **Global auth**: [AuthContext.jsx](web-app/src/context/AuthContext.jsx) with React Context
 - **Protected routes**: [ProtectedRoute.jsx](web-app/components/ProtectedRoute.jsx) wrapper checks auth
 - **Activity tracking**: Custom hooks in `hooks/` for session timeout, cleanup, activity detection
+  - `useActivityTracker` - Monitors user activity to reset session timer
+  - `useSessionTimeout` - 30 min timeout with 2 min warning before expiry
+  - `useSessionCleanup` - Clears session data on browser close
 
 ### API Response Format
 Middleware returns consistent JSON:
@@ -141,6 +150,25 @@ Import dashboards via [import.ps1](monitoring/import.ps1) or manually from [dash
 3. **Docker builds**: Services reference each other by container name (`milkman-app`, not `localhost`)
 4. **Gradle wrapper**: Use `.\gradlew.bat` on Windows, not `gradle`
 5. **Android SDK**: Must configure `local.properties` before building Android app
+6. **Token refresh**: Failed requests are queued during refresh to prevent duplicate 401 errors
+7. **Test database**: Tests use H2 with PostgreSQL compatibility mode (`MODE=PostgreSQL` in jdbc URL)
+
+## Environment-Specific Configuration
+
+### Middleware
+- **Production** (Docker): `SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/milkman`
+- **Local dev**: `jdbc:postgresql://localhost:5433/milkman` (see [application.yml](middleware/src/main/resources/application.yml))
+- **Testing**: H2 in-memory with `schema.sql` (see [test application.yml](middleware/src/test/resources/application.yml))
+
+### Web App
+- **Docker**: `VITE_API_URL=http://milkman-app:8081/milkman` (container-to-container)
+- **Local dev**: Vite proxy handles `/milkman` → `http://localhost:8081/milkman`
+
+### Database Credentials
+- User: `postgres`
+- Password: `Welcome@1234`
+- Database: `milkman`
+- Schema: `milkman` (all tables prefixed)
 
 ## When Making Changes
 

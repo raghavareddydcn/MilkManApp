@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -109,6 +110,99 @@ public class OrderServiceImpl implements OrderService {
         List<OrderDetails> orderDetails = getOrderDetails(orders);
         log.info("[Order Retrieval] Retrieved {} orders for customer: {}", orderDetails.size(), customerId);
         return orderDetails;
+    }
+    
+    @Override
+    public List<OrderDetails> getAllOrdersByPhone(String phoneNo, Pageable pageable) {
+        log.info("[Order Retrieval] Fetching orders for phone: {}", phoneNo);
+        
+        // Get customer by phone number
+        Customers customer = customersRepository.findByPrimaryPhone(phoneNo).stream().findFirst()
+            .orElseThrow(() -> {
+                log.error("[Order Retrieval] Customer not found with phone: {}", phoneNo);
+                return new RuntimeException("Customer not found");
+            });
+        
+        Page<Orders> orders = ordersRepository.findByCustomerId(customer.getCustomerId(), pageable);
+        List<OrderDetails> orderDetails = getOrderDetails(orders);
+        log.info("[Order Retrieval] Retrieved {} orders for phone: {}", orderDetails.size(), phoneNo);
+        return orderDetails;
+    }
+    
+    @Override
+    @Transactional
+    public void deleteOrder(String orderId) {
+        log.info("[Order Deletion] Attempting to delete order ID: {}", orderId);
+        
+        // With orphanRemoval=true and proper mappedBy, deleting the parent will cascade delete children
+        Orders order = ordersRepository.findById(orderId)
+            .orElseThrow(() -> {
+                log.error("[Order Deletion] Order not found with ID: {}", orderId);
+                return new RuntimeException("Order not found with ID: " + orderId);
+            });
+        
+        log.info("[Order Deletion] Deleting order with {} product orders", 
+                 order.getProductOrders() != null ? order.getProductOrders().size() : 0);
+        
+        ordersRepository.delete(order);
+        log.info("[Order Deletion] Successfully deleted order ID: {}", orderId);
+    }
+    
+    @Override
+    @Transactional
+    public OrderRegResponse updateOrder(OrderRegRequest orderRegRequest) {
+        log.info("[Order Update] Updating order ID: {}", orderRegRequest.getOrderId());
+        
+        // Find existing order
+        Orders existingOrder = ordersRepository.findById(orderRegRequest.getOrderId())
+            .orElseThrow(() -> {
+                log.error("[Order Update] Order not found with ID: {}", orderRegRequest.getOrderId());
+                return new RuntimeException("Order not found with ID: " + orderRegRequest.getOrderId());
+            });
+        
+        log.info("[Order Update] Found existing order for customer: {}", existingOrder.getCustomerName());
+        
+        // Remove existing product orders using iterator to maintain cascade relationship
+        List<ProductOrders> existingProductOrders = existingOrder.getProductOrders();
+        if (existingProductOrders != null && !existingProductOrders.isEmpty()) {
+            log.info("[Order Update] Removing {} existing product orders", existingProductOrders.size());
+            // Remove items using iterator to trigger orphanRemoval properly
+            existingProductOrders.clear();
+        }
+        
+        // Update order details
+        existingOrder.setDeliveryDate(orderRegRequest.getDeliveryDate());
+        existingOrder.setDeliveryTimeSlot(orderRegRequest.getDeliveryTimeSlot());
+        existingOrder.setDeliveryFrequency(orderRegRequest.getDeliveryFrequency());
+        existingOrder.setOrderStatus(orderRegRequest.getOrderStatus());
+        existingOrder.setDeliveryCharge(BigDecimal.valueOf(orderRegRequest.getDeliveryCharge()));
+        existingOrder.setUpdatedBy(existingOrder.getCustomerName());
+        existingOrder.setUpdatedTime(LocalDateTime.now());
+        
+        // Create new product orders
+        List<ProductOrders> newProductOrders = getProductOrders(orderRegRequest.getProductOrderReqs(), existingOrder);
+        
+        // Calculate new total
+        BigDecimal productTotal = newProductOrders.stream()
+            .map(po -> po.getProductPrice().multiply(BigDecimal.valueOf(po.getQuantity())))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal orderTotal = productTotal.add(existingOrder.getDeliveryCharge());
+        existingOrder.setOrderTotal(orderTotal);
+        
+        // Add new product orders to the collection
+        existingOrder.getProductOrders().addAll(newProductOrders);
+        
+        // Save updated order (cascade will save product orders)
+        Orders updatedOrder = ordersRepository.save(existingOrder);
+        
+        log.info("[Order Update] Successfully updated order: {} with {} products, Total: {}", 
+                 updatedOrder.getOrderId(), newProductOrders.size(), orderTotal);
+        
+        OrderRegResponse response = OrderRegResponse.builder().orderId(updatedOrder.getOrderId()).build();
+        response.setStatusCode(SUCCESS_CODE);
+        response.setStatus(SUCCESS);
+        
+        return response;
     }
 
 

@@ -133,6 +133,21 @@ public class SubscribeServiceImpl implements SubscribeService {
         return details;
     }
 
+    @Override
+    public List<SubscriptionDetails> getAllSubscriptionsByPhone(String phoneNo, Pageable pageable) {
+        log.info("[Subscription Retrieval] Fetching subscriptions for phone: {}", phoneNo);
+        List<Customers> customers = customersRepository.findByPrimaryPhone(phoneNo);
+        if (customers.isEmpty()) {
+            log.warn("[Subscription Retrieval] No customer found with phone: {}", phoneNo);
+            return new ArrayList<>();
+        }
+        Customers customer = customers.get(0);
+        Page<Subscriptions> subscriptions = subscriptionRepository.findByCustomerId(customer.getCustomerId(), pageable);
+        List<SubscriptionDetails> details = getOrderDetails(subscriptions);
+        log.info("[Subscription Retrieval] Retrieved {} subscriptions for phone: {}", details.size(), phoneNo);
+        return details;
+    }
+
     private List<SubscriptionDetails> getOrderDetails(Page<Subscriptions> orders) {
         List<SubscriptionDetails> subscriptionDetailsList = new ArrayList<>();
         orders.forEach(subscription -> {
@@ -181,5 +196,73 @@ public class SubscribeServiceImpl implements SubscribeService {
             subscriptionDetailsList.add(orderDetails);
         });
         return subscriptionDetailsList;
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public SubscribeResponse updateSubscription(SubscribeRequest subscribeRequest) {
+        log.info("[Subscription Update] Updating subscription ID: {}", subscribeRequest.getSubscriptionId());
+        
+        Subscriptions existingSubscription = subscriptionRepository.findById(subscribeRequest.getSubscriptionId())
+                .orElseThrow(() -> {
+                    log.error("[Subscription Update] Subscription not found: {}", subscribeRequest.getSubscriptionId());
+                    return new RuntimeException("Subscription not found");
+                });
+
+        // Remove existing product subscriptions using clear() to trigger orphanRemoval
+        existingSubscription.getProductSubscriptions().clear();
+
+        // Update subscription fields
+        existingSubscription.setDeliveryStartDate(subscribeRequest.getDeliveryStartDate());
+        existingSubscription.setDeliveryEndDate(subscribeRequest.getDeliveryEndDate());
+        existingSubscription.setDeliveryTimeSlot(subscribeRequest.getDeliveryTimeSlot());
+        existingSubscription.setDeliveryFrequency(subscribeRequest.getDeliveryFrequency());
+        existingSubscription.setDeliveryDays(String.join(", ", subscribeRequest.getDeliveryDays()));
+        existingSubscription.setOrderStatus(subscribeRequest.getOrderStatus());
+        existingSubscription.setDeliveryCharge(BigDecimal.valueOf(subscribeRequest.getDeliveryCharge()));
+        existingSubscription.setUpdatedBy(existingSubscription.getCustomerName());
+        existingSubscription.setUpdatedTime(LocalDateTime.now());
+
+        // Create new product subscriptions
+        List<ProductSubscriptions> newProductSubscriptions = getProductOrders(subscribeRequest.getProductOrderReqs(), existingSubscription);
+
+        // Calculate new total
+        BigDecimal productTotal = newProductSubscriptions.stream()
+                .map(ps -> ps.getProductPrice().multiply(BigDecimal.valueOf(ps.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        existingSubscription.setOrderTotal(productTotal.add(existingSubscription.getDeliveryCharge()));
+
+        // Add to managed collection instead of replacing
+        existingSubscription.getProductSubscriptions().addAll(newProductSubscriptions);
+
+        // Save (cascade handles product subscriptions)
+        Subscriptions updatedSubscription = subscriptionRepository.save(existingSubscription);
+
+        log.info("[Subscription Update] Successfully updated subscription: {} with {} products, Total: {}",
+                 updatedSubscription.getSubscriptionId(), newProductSubscriptions.size(), 
+                 updatedSubscription.getOrderTotal());
+
+        SubscribeResponse response = SubscribeResponse.builder()
+                .subscriptionId(updatedSubscription.getSubscriptionId())
+                .build();
+        response.setStatus(SUCCESS);
+        response.setStatusCode(SUCCESS_CODE);
+        return response;
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteSubscription(String subscriptionId) {
+        log.info("[Subscription Delete] Deleting subscription ID: {}", subscriptionId);
+        
+        Subscriptions subscription = subscriptionRepository.findById(subscriptionId)
+                .orElseThrow(() -> {
+                    log.error("[Subscription Delete] Subscription not found: {}", subscriptionId);
+                    return new RuntimeException("Subscription not found");
+                });
+
+        subscriptionRepository.delete(subscription);
+        
+        log.info("[Subscription Delete] Successfully deleted subscription: {}", subscriptionId);
     }
 }

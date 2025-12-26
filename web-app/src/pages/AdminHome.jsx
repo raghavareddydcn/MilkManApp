@@ -3,7 +3,7 @@ import { Users, Package, ShoppingCart, Calendar, TrendingUp, Clock, CheckCircle 
 import { useEffect, useState } from 'react'
 import { customerAPI, productAPI, orderAPI, subscriptionAPI } from '../services/api'
 
-const Home = () => {
+const AdminHome = () => {
   const [stats, setStats] = useState({
     customers: 0,
     products: 0,
@@ -86,10 +86,10 @@ const Home = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-milkman-light to-white opacity-50"></div>
         <div className="relative text-center py-16 px-4">
           <h1 className="text-5xl md:text-6xl font-bold text-gray-800 mb-4">
-            Welcome to <span className="text-milkman">MilkMan</span>
+            Admin <span className="text-milkman">Dashboard</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Your complete milk delivery management solution
+            Manage your milk delivery business operations
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             {benefits.map((benefit, index) => {
@@ -107,7 +107,7 @@ const Home = () => {
 
       {/* Stats Cards */}
       <section>
-        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Dashboard Overview</h2>
+        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Business Overview</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {statsCards.map((stat, index) => {
             const Icon = stat.icon
@@ -131,7 +131,7 @@ const Home = () => {
 
       {/* Features Grid */}
       <section>
-        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Key Features</h2>
+        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Management Tools</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {features.map((feature, index) => {
             const Icon = feature.icon
@@ -156,8 +156,8 @@ const Home = () => {
 
       {/* Quick Actions */}
       <section className="bg-gradient-to-r from-milkman to-milkman-dark rounded-xl shadow-xl p-8 text-white text-center">
-        <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
-        <p className="text-lg mb-6 opacity-90">Manage your milk delivery business with ease</p>
+        <h2 className="text-3xl font-bold mb-4">Quick Actions</h2>
+        <p className="text-lg mb-6 opacity-90">Streamline your daily operations</p>
         <div className="flex flex-wrap justify-center gap-4">
           <Link to="/customers" className="bg-white text-milkman px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-md">
             Add Customer
@@ -171,4 +171,4 @@ const Home = () => {
   )
 }
 
-export default Home
+export default AdminHome

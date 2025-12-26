@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MilkMan API Tester</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .container { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        input, button { padding: 10px; margin: 5px; font-size: 16px; }
+        button { background: #4CAF50; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #45a049; }
+        pre { background: #333; color: #0f0; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        h2 { color: #333; }
+        .test-btn { background: #2196F3; margin: 10px 5px; }
+        .test-btn:hover { background: #0b7dda; }
+    </style>
+</head>
+<body>
+    <h1>🧪 MilkMan Auth API Tester</h1>
+    
+    <div class="container">
+        <h2>Test Authentication</h2>
+        <div>
+            <input type="text" id="phone" placeholder="Phone Number" value="9566085621">
+            <input type="password" id="pin" placeholder="PIN" value="1234">
+            <button onclick="testAuth()">Test Login</button>
+        </div>
+        <div style="margin-top: 20px;">
+            <button class="test-btn" onclick="testAdmin()">Test Admin (9566085621)</button>
+            <button class="test-btn" onclick="testUser()">Test User (9876543210)</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Response:</h2>
+        <pre id="response">Click "Test Login" to see API response...</pre>
+    </div>
+
+    <div class="container">
+        <h2>Stored User Data:</h2>
+        <pre id="userData">Login first to see stored data...</pre>
+    </div>
+
+    <script>
+        async function testAuth() {
+            const phone = document.getElementById('phone').value;
+            const pin = document.getElementById('pin').value;
+            const responseEl = document.getElementById('response');
+            const userDataEl = document.getElementById('userData');
+
+            try {
+                responseEl.textContent = 'Loading...';
+                
+                const response = await fetch('http://localhost:8081/milkman/customer/authenticate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        emailIdOrPhone: phone,
+                        authPin: pin
+                    })
+                });
+
+                const data = await response.json();
+                responseEl.textContent = JSON.stringify(data, null, 2);
+
+                if (data.status === 'SUCCESS') {
+                    // Store like the app does
+                    localStorage.setItem('token', data.authToken);
+                    localStorage.setItem('refreshToken', data.refreshToken);
+                    
+                    const user = {
+                        customerId: data.customerId,
+                        customerName: data.customerName,
+                        role: data.role
+                    };
+                    localStorage.setItem('user', JSON.stringify(user));
+
+                    // Show stored data
+                    userDataEl.textContent = JSON.stringify({
+                        user: user,
+                        hasToken: !!localStorage.getItem('token'),
+                        hasRefreshToken: !!localStorage.getItem('refreshToken'),
+                        isAdmin: user.role === 'ADMIN'
+                    }, null, 2);
+                }
+            } catch (error) {
+                responseEl.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        function testAdmin() {
+            document.getElementById('phone').value = '9566085621';
+            document.getElementById('pin').value = '1234';
+            testAuth();
+        }
+
+        function testUser() {
+            document.getElementById('phone').value = '9876543210';
+            document.getElementById('pin').value = '1234';
+            testAuth();
+        }
+
+        // Show current stored data on load
+        window.addEventListener('load', () => {
+            const user = localStorage.getItem('user');
+            if (user) {
+                document.getElementById('userData').textContent = JSON.stringify({
+                    user: JSON.parse(user),
+                    hasToken: !!localStorage.getItem('token'),
+                    isAdmin: JSON.parse(user).role === 'ADMIN'
+                }, null, 2);
+            }
+        });
+    </script>
+</body>
+</html>

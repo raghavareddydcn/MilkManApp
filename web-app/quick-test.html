@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html><html><body><h1>Testing Real Flow</h1><div id="result"></div><script>
+(async () => {
+  const log = (msg) => { document.getElementById("result").innerHTML += `<p>${msg}</p>`; console.log(msg); };
+  
+  // 1. Clear storage
+  localStorage.clear();
+  log("1. Cleared storage");
+  
+  // 2. Login
+  const res = await fetch("http://localhost:8081/milkman/customer/authenticate", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({emailIdOrPhone: "9566085621", authPin: "admin"})
+  });
+  const data = await res.json();
+  log("2. Login response: " + JSON.stringify(data));
+  
+  // 3. Store
+  const customer = {customerId: data.customerId, customerName: data.customerName, role: data.role};
+  localStorage.setItem("token", data.authToken);
+  localStorage.setItem("user", JSON.stringify(customer));
+  log("3. Stored user: " + JSON.stringify(customer));
+  
+  // 4. Check
+  const stored = JSON.parse(localStorage.getItem("user"));
+  log("4. Retrieved user: " + JSON.stringify(stored));
+  log("5. Role check: " + stored.role + " === ADMIN? " + (stored.role === "ADMIN"));
+  
+  // 5. Open app
+  setTimeout(() => window.open("http://localhost:3001", "_blank"), 2000);
+})();
+</script></body></html>

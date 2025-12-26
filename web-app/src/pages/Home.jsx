@@ -2,8 +2,10 @@ import { Link } from 'react-router-dom'
 import { Users, Package, ShoppingCart, Calendar, TrendingUp, Clock, CheckCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { customerAPI, productAPI, orderAPI, subscriptionAPI } from '../services/api'
+import { useAuth } from '../context/AuthContext'
 
 const Home = () => {
+  const { isAdmin } = useAuth()
   const [stats, setStats] = useState({
     customers: 0,
     products: 0,
@@ -19,18 +21,24 @@ const Home = () => {
 
   const fetchStats = async () => {
     try {
-      const [customers, products, orders, subscriptions] = await Promise.all([
-        customerAPI.getAll(),
+      const promises = [
         productAPI.getAll(),
         orderAPI.getAll(),
         subscriptionAPI.getAll()
-      ])
+      ]
+      
+      // Only fetch customers for admin users
+      if (isAdmin()) {
+        promises.unshift(customerAPI.getAll())
+      }
+      
+      const results = await Promise.all(promises)
       
       setStats({
-        customers: customers.data?.length || 0,
-        products: products.data?.length || 0,
-        orders: orders.data?.length || 0,
-        subscriptions: subscriptions.data?.length || 0
+        customers: isAdmin() ? (results[0].data?.length || 0) : 0,
+        products: isAdmin() ? (results[1].data?.length || 0) : (results[0].data?.length || 0),
+        orders: isAdmin() ? (results[2].data?.length || 0) : (results[1].data?.length || 0),
+        subscriptions: isAdmin() ? (results[3].data?.length || 0) : (results[2].data?.length || 0)
       })
     } catch (error) {
       console.error('Error fetching stats:', error)
@@ -39,19 +47,29 @@ const Home = () => {
     }
   }
 
-  const statsCards = [
-    { title: 'Total Customers', value: stats.customers, icon: Users, color: 'from-blue-500 to-blue-600', link: '/customers' },
+  const allStatsCards = [
+    { title: 'Total Customers', value: stats.customers, icon: Users, color: 'from-blue-500 to-blue-600', link: '/customers', adminOnly: true },
     { title: 'Products', value: stats.products, icon: Package, color: 'from-green-500 to-green-600', link: '/products' },
     { title: 'Active Orders', value: stats.orders, icon: ShoppingCart, color: 'from-purple-500 to-purple-600', link: '/orders' },
     { title: 'Subscriptions', value: stats.subscriptions, icon: Calendar, color: 'from-orange-500 to-orange-600', link: '/subscriptions' }
   ]
+  
+  const statsCards = allStatsCards.filter(card => !card.adminOnly || isAdmin())
 
-  const features = [
+  const allFeatures = [
     {
       icon: Users,
       title: 'Customer Management',
       description: 'Manage customer accounts, track orders, and maintain delivery preferences',
-      link: '/customers'
+      link: '/customers',
+      adminOnly: true
+    },
+    {
+      icon: Users,
+      title: 'My Profile',
+      description: 'View and manage your personal information and account settings',
+      link: '/profile',
+      userOnly: true
     },
     {
       icon: Package,
@@ -72,6 +90,12 @@ const Home = () => {
       link: '/subscriptions'
     }
   ]
+  
+  const features = allFeatures.filter(feature => {
+    if (feature.adminOnly) return isAdmin()
+    if (feature.userOnly) return !isAdmin()
+    return true
+  })
 
   const benefits = [
     { icon: Clock, text: 'Real-time order tracking' },

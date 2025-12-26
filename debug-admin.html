@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Admin Login</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #0f0; }
+        .box { background: #2d2d2d; padding: 15px; margin: 10px 0; border-left: 4px solid #0f0; }
+        .error { border-color: #f00; color: #f00; }
+        .success { border-color: #0f0; color: #0f0; }
+        button { padding: 10px 20px; background: #0f0; color: #000; border: none; cursor: pointer; margin: 5px; }
+        pre { white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Admin Login Debug Tool</h1>
+    
+    <div class="box">
+        <h2>Step 1: Check Current Storage</h2>
+        <button onclick="checkStorage()">Check LocalStorage</button>
+        <pre id="storage"></pre>
+    </div>
+
+    <div class="box">
+        <h2>Step 2: Clear and Login</h2>
+        <button onclick="clearStorage()">Clear Storage</button>
+        <button onclick="testLogin()">Test Admin Login</button>
+        <pre id="login"></pre>
+    </div>
+
+    <div class="box">
+        <h2>Step 3: Verify</h2>
+        <button onclick="verify()">Verify Admin Status</button>
+        <pre id="verify"></pre>
+    </div>
+
+    <script>
+        function checkStorage() {
+            const user = localStorage.getItem('user');
+            const token = localStorage.getItem('token');
+            
+            document.getElementById('storage').innerHTML = 
+                '🔍 LocalStorage Contents:\n\n' +
+                'Has Token: ' + (!!token ? '✅ YES' : '❌ NO') + '\n' +
+                'User Data: ' + (user || '❌ NONE') + '\n\n' +
+                'Parsed User:\n' + JSON.stringify(user ? JSON.parse(user) : null, null, 2);
+        }
+
+        function clearStorage() {
+            localStorage.clear();
+            document.getElementById('storage').innerHTML = '✅ Storage cleared!';
+        }
+
+        async function testLogin() {
+            const output = document.getElementById('login');
+            output.innerHTML = '⏳ Testing admin login...';
+
+            try {
+                const response = await fetch('http://localhost:8081/milkman/customer/authenticate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        emailIdOrPhone: '9566085621',
+                        authPin: 'admin'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'SUCCESS') {
+                    // Store like the app does
+                    localStorage.setItem('token', data.authToken);
+                    localStorage.setItem('refreshToken', data.refreshToken);
+                    
+                    const user = {
+                        customerId: data.customerId,
+                        customerName: data.customerName,
+                        role: data.role
+                    };
+                    localStorage.setItem('user', JSON.stringify(user));
+
+                    output.innerHTML = 
+                        '✅ SUCCESS!\n\n' +
+                        'Response:\n' + JSON.stringify(data, null, 2) + '\n\n' +
+                        'Stored User:\n' + JSON.stringify(user, null, 2);
+                } else {
+                    output.innerHTML = '❌ FAILED:\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                output.innerHTML = '❌ ERROR: ' + error.message;
+            }
+        }
+
+        function verify() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const isAdmin = user.role === 'ADMIN';
+            
+            document.getElementById('verify').innerHTML = 
+                '🔍 Verification Results:\n\n' +
+                'User ID: ' + (user.customerId || '❌ MISSING') + '\n' +
+                'Name: ' + (user.customerName || '❌ MISSING') + '\n' +
+                'Role: ' + (user.role || '❌ MISSING') + '\n\n' +
+                'Is Admin? ' + (isAdmin ? '✅ YES - Should see AdminHome' : '❌ NO - Should see UserHome') + '\n\n' +
+                'Expected Page: ' + (isAdmin ? 'Admin Dashboard' : 'User Welcome Page') + '\n\n' +
+                'Full User Object:\n' + JSON.stringify(user, null, 2);
+        }
+
+        // Auto-check on load
+        window.onload = () => {
+            checkStorage();
+        };
+    </script>
+</body>
+</html>

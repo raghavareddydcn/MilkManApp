@@ -80,13 +80,27 @@ public class CustomerController {
 
     @PutMapping("/update")
     public Customers updateCustomer(@RequestBody Customers customer) {
-        log.info("[Customer Update] Updating customer with ID: {}", customer.getCustomerId());
+        log.info("\n========== CUSTOMER UPDATE REQUEST RECEIVED ==========");
+        log.info("[Customer Update] Request Body ID: {}", customer.getId());
+        log.info("[Customer Update] Request Body CustomerID: {}", customer.getCustomerId());
+        log.info("[Customer Update] Request Body FirstName: {}", customer.getFirstName());
+        log.info("[Customer Update] Request Body LastName: {}", customer.getLastName());
+        log.info("[Customer Update] Request Body Email: {}", customer.getEmailId());
+        log.info("[Customer Update] Request Body Phone: {}", customer.getPrimaryPhone());
+        log.info("[Customer Update] Request Body Address: {}", customer.getAddress());
+        log.info("[Customer Update] Request Body Pincode: {}", customer.getPinCode());
+        log.info("[Customer Update] Request Body Role: {}", customer.getRole());
         
+        log.info("[Customer Update] Calling customersRepository.save()...");
         Customers updatedCustomer = customersRepository.save(customer);
         
-        log.info("[Customer Update] Successfully updated customer: {} {} (ID: {})",
-                 updatedCustomer.getFirstName(), updatedCustomer.getLastName(), 
-                 updatedCustomer.getCustomerId());
+        log.info("[Customer Update] Database save completed");
+        log.info("[Customer Update] Saved ID: {}", updatedCustomer.getId());
+        log.info("[Customer Update] Saved CustomerID: {}", updatedCustomer.getCustomerId());
+        log.info("[Customer Update] Saved FirstName: {}", updatedCustomer.getFirstName());
+        log.info("[Customer Update] Saved LastName: {}", updatedCustomer.getLastName());
+        log.info("[Customer Update] Saved Email: {}", updatedCustomer.getEmailId());
+        log.info("========== CUSTOMER UPDATE COMPLETED ==========\n");
         
         return updatedCustomer;
     }

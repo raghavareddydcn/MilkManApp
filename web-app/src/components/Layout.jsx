@@ -9,11 +9,18 @@ const Layout = ({ children }) => {
   
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
-    { path: '/customers', label: 'Customers', icon: Users },
+    { path: '/customers', label: 'Customers', icon: Users, adminOnly: true },
+    { path: '/profile', label: 'Profile', icon: User, userOnly: true },
     { path: '/products', label: 'Products', icon: Package },
     { path: '/orders', label: 'Orders', icon: ShoppingCart },
     { path: '/subscriptions', label: 'Subscriptions', icon: Calendar },
   ]
+  
+  const filteredNavItems = navItems.filter(item => {
+    if (item.adminOnly) return isAdmin()
+    if (item.userOnly) return !isAdmin()
+    return true
+  })
   
   const isActive = (path) => location.pathname === path
 
@@ -34,7 +41,7 @@ const Layout = ({ children }) => {
             </div>
             
             <nav className="hidden md:flex space-x-1">
-              {navItems.map((item) => {
+              {filteredNavItems.map((item) => {
                 const Icon = item.icon
                 return (
                   <Link
@@ -81,7 +88,7 @@ const Layout = ({ children }) => {
       {/* Mobile Navigation */}
       <nav className="md:hidden bg-white shadow-md sticky top-0 z-40">
         <div className="container mx-auto px-4 py-2 flex justify-around">
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const Icon = item.icon
             return (
               <Link

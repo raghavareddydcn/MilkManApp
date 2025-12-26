@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customer Login Test - MilkMan</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f0f0f0; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }
+        button { background: #4CAF50; color: white; padding: 10px 20px; border: none; cursor: pointer; margin: 10px 5px; font-size: 16px; }
+        button:hover { background: #45a049; }
+        .output { background: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 4px; max-height: 400px; overflow-y: auto; }
+        pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .info { color: blue; }
+        .customer { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="customer">
+            <h1>👤 Customer Login Test</h1>
+            <p>Testing non-admin user experience</p>
+        </div>
+        
+        <div>
+            <button onclick="clearEverything()">1. Clear Everything</button>
+            <button onclick="testCustomerLogin()">2. Login as Customer</button>
+            <button onclick="checkStorage()">3. Check Storage</button>
+            <button onclick="openActualApp()">4. Open App</button>
+        </div>
+        
+        <div id="output" class="output">
+            <p class="info">👉 Click buttons in order: 1 → 2 → 3 → 4</p>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const p = document.createElement('p');
+            p.className = type;
+            p.textContent = message;
+            output.appendChild(p);
+            console.log(message);
+        }
+
+        function clearEverything() {
+            document.getElementById('output').innerHTML = '';
+            localStorage.clear();
+            sessionStorage.clear();
+            log('✅ Cleared all storage', 'success');
+        }
+
+        async function testCustomerLogin() {
+            log('🔐 Starting CUSTOMER Login Test...', 'info');
+            log('Phone: 9876543210, PIN: admin', 'info');
+            log('Calling: http://localhost:8081/milkman/customer/authenticate', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:8081/milkman/customer/authenticate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        emailIdOrPhone: '9876543210',
+                        authPin: 'admin'
+                    })
+                });
+
+                const data = await response.json();
+                log('📦 API Response Status: ' + data.status, data.status === 'SUCCESS' ? 'success' : 'error');
+                log('Response Data:', 'info');
+                log(JSON.stringify(data, null, 2), 'info');
+
+                if (data.status === 'SUCCESS') {
+                    const customer = {
+                        customerId: data.customerId,
+                        customerName: data.customerName,
+                        role: data.role
+                    };
+
+                    log('Storing tokens...', 'info');
+                    localStorage.setItem('token', data.authToken);
+                    localStorage.setItem('refreshToken', data.refreshToken);
+                    localStorage.setItem('user', JSON.stringify(customer));
+                    localStorage.setItem('lastActivity', Date.now().toString());
+
+                    log('✅ Login Success!', 'success');
+                    log('Customer ID: ' + customer.customerId, 'success');
+                    log('Name: ' + customer.customerName, 'success');
+                    log('Role: ' + customer.role, customer.role !== 'ADMIN' ? 'success' : 'error');
+                    log('Is Customer (not admin)? ' + (customer.role !== 'ADMIN'), customer.role !== 'ADMIN' ? 'success' : 'error');
+                } else {
+                    log('❌ Login Failed: ' + (data.errorMsg || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                log('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        function checkStorage() {
+            log('📦 Checking localStorage...', 'info');
+            
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            
+            if (!token) {
+                log('❌ No token found!', 'error');
+                return;
+            }
+            
+            if (!userStr) {
+                log('❌ No user data found!', 'error');
+                return;
+            }
+
+            try {
+                const user = JSON.parse(userStr);
+                log('✅ User Data Found:', 'success');
+                log('  Customer ID: ' + user.customerId, 'info');
+                log('  Name: ' + user.customerName, 'info');
+                log('  Role: ' + user.role, user.role !== 'ADMIN' ? 'success' : 'error');
+                log('  Is Customer: ' + (user.role !== 'ADMIN'), user.role !== 'ADMIN' ? 'success' : 'error');
+                log('  Token (first 50 chars): ' + token.substring(0, 50) + '...', 'info');
+                
+                if (user.role !== 'ADMIN') {
+                    log('✅✅✅ SHOULD SEE CUSTOMER DASHBOARD!', 'success');
+                    log('Expected: Shopping cart, order tracking, subscription management', 'success');
+                } else {
+                    log('❌ IS ADMIN - Will see admin page (wrong!)', 'error');
+                }
+            } catch (error) {
+                log('❌ Error parsing user data: ' + error.message, 'error');
+            }
+        }
+
+        function openActualApp() {
+            log('🚀 Opening customer view in new tab...', 'info');
+            log('Expected to see:', 'info');
+            log('  ✓ Welcome message with customer name', 'info');
+            log('  ✓ Order Products button (blue)', 'info');
+            log('  ✓ My Subscriptions, My Orders links', 'info');
+            log('  ✓ NO "Customers" menu item', 'info');
+            log('  ✓ Shopping cart when clicking Products', 'info');
+            log('Make sure to open DevTools (F12) in the new tab!', 'info');
+            setTimeout(() => {
+                window.open('http://localhost:3001', '_blank');
+            }, 500);
+        }
+    </script>
+</body>
+</html>

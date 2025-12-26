@@ -15,4 +15,10 @@ public interface OrderService {
     List<OrderDetails> getAllOrders(Pageable pageable);
 
     List<OrderDetails> getAllOrdersByCustomerId(String customerId, Pageable pageable);
+    
+    List<OrderDetails> getAllOrdersByPhone(String phoneNo, Pageable pageable);
+    
+    void deleteOrder(String orderId);
+    
+    OrderRegResponse updateOrder(OrderRegRequest orderRegRequest);
 }
