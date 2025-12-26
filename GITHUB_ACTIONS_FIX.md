@@ -27,11 +27,14 @@ We have successfully resolved **7 specific issues** to make the CI/CD pipeline f
 - **Fix:** Replaced `npm ci` with `npm install`.
 
 ## 6. Automation Tests Failure (Fixed)
-- **Issue:** API tests failed because database was empty.
-- **Fix:** Added **Database Seeding Step** (Customer & Admin registration, Role Promotion).
+- **Issue:** API tests failed because database was missing expected users.
+- **Fix:** Added **Robust Database Seeding**:
+    1. Created `scripts/seed.js` using `axios` to reliably register Customer & Admin.
+    2. Updated CI workflow to use this script.
+    3. Promotes Admin to `ROLE_ADMIN` using `psql`.
 
 ## 7. Database Initialization Failure (Fixed)
-- **Issue:** App failed to create tables (500 Error) because `milkman` schema was missing.
+- **Issue:** App failed to create tables because `milkman` schema was missing.
 - **Fix:** Added `CREATE SCHEMA IF NOT EXISTS milkman;` step *before* app startup.
 
 ---
@@ -42,4 +45,4 @@ We have successfully resolved **7 specific issues** to make the CI/CD pipeline f
 - **CI Configuration:** `.github/workflows/ci-cd.yml` correctly initializes schema and seeds data.
 - **Git:** Changes committed and pushed.
 
-**The GitHub Actions pipeline is now running and expected to pass.** 🚀
+**The GitHub Actions pipeline is now running and expected to pass purely GREEN.** 🟢

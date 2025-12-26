@@ -21,15 +21,41 @@ async function seed() {
     try {
         console.log('Registering Customer:', customer.primaryPhone);
         const res = await axios.post(`${API_URL}/customer/register`, customer);
-        console.log('Customer seeded successfully. Status:', res.status);
+
+        if (res.data.statusCode && res.data.statusCode !== '200') {
+            if (res.data.statusCode === '409') {
+                console.log('Customer already exists (Logical 409)');
+            } else {
+                throw new Error(`Registration Failed: ${JSON.stringify(res.data)}`);
+            }
+        } else {
+            console.log('Customer seeded successfully.');
+        }
     } catch (e) {
-        if (e.response && (e.response.status === 409 || (e.response.data && e.response.data.statucCode === '409'))) {
-            console.log('Customer already exists');
+        if (e.response && e.response.status === 409) {
+            console.log('Customer already exists (HTTP 409)');
         } else {
             console.error('Failed to seed Customer:', e.message);
             if (e.response) console.error('Response:', e.response.data);
             process.exit(1);
         }
+    }
+
+    // 1.1 Verify Login
+    try {
+        console.log('Verifying Customer Login...');
+        const login = { emailIdOrPhone: customer.primaryPhone, authPin: customer.authPin, loginType: "customer" };
+        // Note: loginType might be needed if API differs, but based on Service it's not strictly used in query
+        const res = await axios.post(`${API_URL}/customer/authenticate`, login);
+
+        if (res.data.statusCode !== '200') {
+            throw new Error(`Verification Login Failed: ${JSON.stringify(res.data)}`);
+        }
+        console.log('Customer Login Verified.');
+    } catch (e) {
+        console.error('Login Verification Failed:', e.message);
+        if (e.response) console.error('Response:', e.response.data);
+        process.exit(1);
     }
 
     // 2. Admin (as User)
@@ -47,10 +73,19 @@ async function seed() {
     try {
         console.log('Registering Admin:', admin.primaryPhone);
         const res = await axios.post(`${API_URL}/customer/register`, admin);
-        console.log('Admin seeded successfully (as User). Status:', res.status);
+
+        if (res.data.statusCode && res.data.statusCode !== '200') {
+            if (res.data.statusCode === '409') {
+                console.log('Admin already exists (Logical 409)');
+            } else {
+                throw new Error(`Registration Failed: ${JSON.stringify(res.data)}`);
+            }
+        } else {
+            console.log('Admin seeded successfully (as User).');
+        }
     } catch (e) {
-        if (e.response && (e.response.status === 409 || (e.response.data && e.response.data.statucCode === '409'))) {
-            console.log('Admin already exists');
+        if (e.response && e.response.status === 409) {
+            console.log('Admin already exists (HTTP 409)');
         } else {
             console.error('Failed to seed Admin:', e.message);
             if (e.response) console.error('Response:', e.response.data);
