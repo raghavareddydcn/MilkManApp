@@ -89,8 +89,18 @@ class APIClient {
     /**
      * Customer Authentication
      */
+    /**
+     * Customer Authentication
+     */
     async authenticateCustomer(credentials) {
-        const response = await this.post('/customer/authenticate', credentials);
+        // API expects authPin, but tests provide password
+        const payload = { ...credentials };
+        if (payload.password && !payload.authPin) {
+            payload.authPin = payload.password;
+            delete payload.password;
+        }
+
+        const response = await this.post('/customer/authenticate', payload);
         if (response.status === 200 && response.data.accessToken) {
             this.setTokens(response.data.accessToken, response.data.refreshToken);
         }
@@ -101,7 +111,15 @@ class APIClient {
      * Admin Authentication
      */
     async authenticateAdmin(credentials) {
-        const response = await this.post('/admin/authenticate', credentials);
+        // API expects authPin, but tests provide password
+        const payload = { ...credentials };
+        if (payload.password && !payload.authPin) {
+            payload.authPin = payload.password;
+            delete payload.password;
+        }
+
+        // Admin authenticates via same endpoint as customer
+        const response = await this.post('/customer/authenticate', payload);
         if (response.status === 200 && response.data.accessToken) {
             this.setTokens(response.data.accessToken, response.data.refreshToken);
         }
