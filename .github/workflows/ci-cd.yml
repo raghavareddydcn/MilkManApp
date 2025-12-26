@@ -57,6 +57,11 @@ jobs:
       run: ./gradlew jacocoTestReport
       working-directory: middleware
 
+    - name: Initialize Database Schema
+      run: |
+        export PGPASSWORD=Welcome@1234
+        psql -h localhost -p 5433 -U postgres -d milkman -c "CREATE SCHEMA IF NOT EXISTS milkman;"
+
     - name: Start Middleware Application
       run: |
         nohup ./gradlew bootRun > app.log 2>&1 &
