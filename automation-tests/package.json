@@ -30,7 +30,5 @@
     "selenium-webdriver": "^4.16.0",
     "dotenv": "^16.3.1"
   },
-  "devDependencies": {
-    "chromedriver": "^120.0.1"
-  }
+  "devDependencies": {}
 }
