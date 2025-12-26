@@ -101,6 +101,12 @@ class APIClient {
         }
 
         const response = await this.post('/customer/authenticate', payload);
+
+        // Map API 'authToken' to Test 'accessToken'
+        if (response.data && response.data.authToken) {
+            response.data.accessToken = response.data.authToken;
+        }
+
         if (response.status === 200 && response.data.accessToken) {
             this.setTokens(response.data.accessToken, response.data.refreshToken);
         }
@@ -120,6 +126,12 @@ class APIClient {
 
         // Admin authenticates via same endpoint as customer
         const response = await this.post('/customer/authenticate', payload);
+
+        // Map API 'authToken' to Test 'accessToken'
+        if (response.data && response.data.authToken) {
+            response.data.accessToken = response.data.authToken;
+        }
+
         if (response.status === 200 && response.data.accessToken) {
             this.setTokens(response.data.accessToken, response.data.refreshToken);
         }
@@ -131,6 +143,12 @@ class APIClient {
      */
     async refreshAccessToken(refreshToken) {
         const response = await this.post('/customer/refresh-token', { refreshToken });
+
+        // Map API 'authToken' to Test 'accessToken'
+        if (response.data && response.data.authToken) {
+            response.data.accessToken = response.data.authToken;
+        }
+
         if (response.status === 200 && response.data.accessToken) {
             this.setTokens(response.data.accessToken, response.data.refreshToken);
         }
