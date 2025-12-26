@@ -11,6 +11,8 @@
 .mtj.tmp/
 
 # Package Files #
+# Exception: Keep Gradle wrapper JAR (required for builds)
+!gradle/wrapper/gradle-wrapper.jar
 *.jar
 *.war
 *.nar
