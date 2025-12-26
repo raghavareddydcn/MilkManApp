@@ -29,9 +29,10 @@ We have successfully resolved **7 specific issues** to make the CI/CD pipeline f
 ## 6. Automation Tests Failure (Fixed)
 - **Issue:** API tests failed because database was missing expected users.
 - **Fix:** Added **Robust Database Seeding**:
-    1. Created `scripts/seed.js` using `axios` to reliably register Customer & Admin.
-    2. Updated CI workflow to use this script.
-    3. Promotes Admin to `ROLE_ADMIN` using `psql`.
+    1. Created `scripts/seed.js` using `axios` logic.
+    2. Registers Customer & Admin, checks logical status codes.
+    3. **Verifies Login** immediately in seeding step to ensure data validity.
+    4. Promotes Admin to `ROLE_ADMIN` using `psql`.
 
 ## 7. Database Initialization Failure (Fixed)
 - **Issue:** App failed to create tables because `milkman` schema was missing.
