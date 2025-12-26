@@ -37,6 +37,12 @@ class ProductControllerTest {
         @MockBean
         private com.app.milkman.component.RoleAuthorizationInterceptor roleAuthorizationInterceptor;
 
+        @org.junit.jupiter.api.BeforeEach
+        void setUp() throws Exception {
+                // Default behavior: Allow all requests
+                when(roleAuthorizationInterceptor.preHandle(any(), any(), any())).thenReturn(true);
+        }
+
         @Test
         @DisplayName("Should register product successfully")
         void testRegisterProduct() throws Exception {
@@ -53,8 +59,6 @@ class ProductControllerTest {
                 response.setStatus("SUCCESS");
                 response.setStatusCode("200");
 
-                // Mock interceptor to bypass role check
-                when(roleAuthorizationInterceptor.preHandle(any(), any(), any())).thenReturn(true);
                 when(productService.registerProduct(any())).thenReturn(response);
 
                 mockMvc.perform(post("/product/register")
@@ -78,8 +82,6 @@ class ProductControllerTest {
                                 .build();
                 response.setStatus("SUCCESS");
 
-                // Mock interceptor to bypass role check
-                when(roleAuthorizationInterceptor.preHandle(any(), any(), any())).thenReturn(true);
                 when(productService.updateProduct(any())).thenReturn(response);
 
                 mockMvc.perform(put("/product/update")
