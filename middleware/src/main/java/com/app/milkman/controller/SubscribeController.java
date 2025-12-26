@@ -7,8 +7,6 @@ import com.app.milkman.service.SubscribeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,22 +23,11 @@ public class SubscribeController {
     private JWTService jwtService;
 
     @PostMapping("/create")
-    public ResponseEntity<SubscribeResponse> createOrder(@RequestBody SubscribeRequest subscribeRequest) {
+    public SubscribeResponse createOrder(@RequestBody SubscribeRequest subscribeRequest) {
         log.info("[Subscription Creation Request] Subscription endpoint invoked for customer: {}", 
                  subscribeRequest.getCustomerId());
         
-        SubscribeResponse response = subscribeService.subscribe(subscribeRequest);
-        
-        // Return appropriate HTTP status based on response
-        if ("400".equals(response.getStatusCode())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        } else if ("404".equals(response.getStatusCode())) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-        } else if ("500".equals(response.getStatusCode())) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-        
-        return ResponseEntity.ok(response);
+        return subscribeService.subscribe(subscribeRequest);
     }
 
     @GetMapping("/getAllSubscriptions")
