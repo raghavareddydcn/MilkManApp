@@ -86,19 +86,12 @@ jobs:
 
     - name: Seed Database
       run: |
-        echo "Seeding Customer User..."
-        curl -X POST http://localhost:8081/milkman/customer/register \
-          -H "Content-Type: application/json" \
-          -d '{"firstName":"Test","lastName":"Customer","primaryPhone":"9876543211","emailId":"customer@test.com","dateOfBirth":"1990-01-01","address":"Test Address","pincode":"123456","authPin":"customer123"}'
-        
-        echo "Seeding Admin User..."
-        curl -X POST http://localhost:8081/milkman/customer/register \
-          -H "Content-Type: application/json" \
-          -d '{"firstName":"Test","lastName":"Admin","primaryPhone":"9876543210","emailId":"admin@milkman.com","dateOfBirth":"1990-01-01","address":"Admin Address","pincode":"123456","authPin":"admin123"}'
+        node scripts/seed.js
         
         echo "Promoting Admin..."
         export PGPASSWORD=Welcome@1234
         psql -h localhost -p 5433 -U postgres -d milkman -c "UPDATE milkman.customers SET role = 'ADMIN' WHERE pphone = '9876543210';"
+      working-directory: automation-tests
 
 
     - name: Run API Automation Tests
