@@ -70,7 +70,7 @@ const CustomerSubscriptions = () => {
       handleCloseModal()
     } catch (error) {
       console.error('Error creating subscription:', error)
-      alert('Error creating subscription. Please try again.')
+      alert('Failed to create subscription: ' + (error.response?.data?.message || error.message))
     }
   }
 
@@ -133,21 +133,15 @@ const CustomerSubscriptions = () => {
       handleCancelEdit()
     } catch (error) {
       console.error('Error updating subscription:', error)
-      alert('Error updating subscription. Please try again.')
+      alert('Failed to update subscription: ' + (error.response?.data?.message || error.message))
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (subscriptionId) => {
-    console.log('🗑️ handleDelete called with ID:', subscriptionId)
-    console.log('🗑️ ID type:', typeof subscriptionId)
-    console.log('🗑️ ID is undefined?', subscriptionId === undefined)
-    console.log('🗑️ ID is null?', subscriptionId === null)
-    
     if (!subscriptionId) {
-      console.error('❌ subscriptionId is undefined or null!')
-      alert('Error: Subscription ID is missing. Check browser console for details.')
+      alert('Error: Subscription ID is missing.')
       return
     }
     
@@ -156,14 +150,11 @@ const CustomerSubscriptions = () => {
     }
 
     try {
-      console.log('🗑️ Calling delete API for ID:', subscriptionId)
       await subscriptionAPI.delete(subscriptionId)
-      console.log('✅ Delete successful')
       await fetchData()
     } catch (error) {
-      console.error('❌ Error deleting subscription:', error)
-      console.error('❌ Error response:', error.response?.data)
-      alert('Error deleting subscription. Please try again.')
+      console.error('Error deleting subscription:', error)
+      alert('Failed to delete subscription: ' + (error.response?.data?.message || error.message))
     }
   }
 

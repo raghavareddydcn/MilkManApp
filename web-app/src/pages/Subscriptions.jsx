@@ -52,7 +52,7 @@ const Subscriptions = () => {
       handleCloseModal()
     } catch (error) {
       console.error('Error creating subscription:', error)
-      alert('Error creating subscription. Please try again.')
+      alert('Failed to create subscription: ' + (error.response?.data?.message || error.message))
     }
   }
 
@@ -112,7 +112,7 @@ const Subscriptions = () => {
       handleCancelEdit()
     } catch (error) {
       console.error('Error updating subscription:', error)
-      alert('Error updating subscription. Please try again.')
+      alert('Failed to update subscription: ' + (error.response?.data?.message || error.message))
     } finally {
       setSaving(false)
     }
@@ -133,7 +133,7 @@ const Subscriptions = () => {
       await fetchData()
     } catch (error) {
       console.error('Error deleting subscription:', error)
-      alert('Error deleting subscription. Please try again.')
+      alert('Failed to delete subscription: ' + (error.response?.data?.message || error.message))
     }
   }
 

@@ -49,7 +49,7 @@ const Orders = () => {
       handleCloseModal()
     } catch (error) {
       console.error('Error creating order:', error)
-      alert('Error creating order. Please try again.')
+      alert('Failed to create order: ' + (error.response?.data?.message || error.message))
     }
   }
 
@@ -104,7 +104,7 @@ const Orders = () => {
       handleCancelEdit()
     } catch (error) {
       console.error('Error updating order:', error)
-      alert('Error updating order. Please try again.')
+      alert('Failed to update order: ' + (error.response?.data?.message || error.message))
     } finally {
       setSaving(false)
     }
@@ -125,7 +125,7 @@ const Orders = () => {
       await fetchData()
     } catch (error) {
       console.error('Error deleting order:', error)
-      alert('Error deleting order. Please try again.')
+      alert('Failed to delete order: ' + (error.response?.data?.message || error.message))
     }
   }
 

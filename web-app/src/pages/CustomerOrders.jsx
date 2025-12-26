@@ -132,7 +132,6 @@ const CustomerOrders = () => {
       }
 
       await orderAPI.update(orderData)
-      alert('Order updated successfully!')
       handleCancelEdit()
       await fetchOrders()
     } catch (error) {
@@ -150,7 +149,6 @@ const CustomerOrders = () => {
     try {
       await orderAPI.delete(orderId)
       await fetchOrders()
-      alert('Order deleted successfully')
     } catch (error) {
       console.error('Error deleting order:', error)
       alert('Failed to delete order: ' + (error.response?.data?.message || error.message))
@@ -202,7 +200,6 @@ const CustomerOrders = () => {
       }
 
       await orderAPI.create(orderData)
-      alert('Order created successfully!')
       setShowCreateModal(false)
       setSelectedProducts([])
       setDeliveryDate('')
