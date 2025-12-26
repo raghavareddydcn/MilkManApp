@@ -25,64 +25,70 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("Customer Controller Integration Tests")
 class CustomerControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockBean
-    private CustomerService customerService;
+        @MockBean
+        private CustomerService customerService;
 
-    @Test
-    @DisplayName("Should register customer successfully")
-    void testRegisterCustomer() throws Exception {
-        CustomerRegRequest request = new CustomerRegRequest();
-        request.setFirstName("John");
-        request.setLastName("Doe");
-        request.setPrimaryPhone("9876543210");
-        request.setEmailId("john@example.com");
-        request.setDateOfBirth(LocalDate.of(1990, 1, 1));
-        request.setAddress("123 Main St");
-        request.setPincode("500001");
+        @MockBean
+        private com.app.milkman.repository.CustomersRepository customersRepository;
 
-        CustomerRegResponse response = CustomerRegResponse.builder()
-                .customerId("CUS001")
-                .customerName("John Doe")
-                .build();
-        response.setStatus("SUCCESS");
-        response.setStatusCode("200");
+        @MockBean
+        private com.app.milkman.component.JWTService jwtService;
 
-        when(customerService.registerCustomer(any())).thenReturn(response);
+        @Test
+        @DisplayName("Should register customer successfully")
+        void testRegisterCustomer() throws Exception {
+                CustomerRegRequest request = new CustomerRegRequest();
+                request.setFirstName("John");
+                request.setLastName("Doe");
+                request.setPrimaryPhone("9876543210");
+                request.setEmailId("john@example.com");
+                request.setDateOfBirth(LocalDate.of(1990, 1, 1));
+                request.setAddress("123 Main St");
+                request.setPincode("500001");
 
-        mockMvc.perform(post("/customer/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SUCCESS"));
-    }
+                CustomerRegResponse response = CustomerRegResponse.builder()
+                                .customerId("CUS001")
+                                .customerName("John Doe")
+                                .build();
+                response.setStatus("SUCCESS");
+                response.setStatusCode("200");
 
-    @Test
-    @DisplayName("Should authenticate customer successfully")
-    void testAuthenticateCustomer() throws Exception {
-        CustomerAuthRequest request = new CustomerAuthRequest();
-        request.setEmailIdOrPhone("9876543210");
-        request.setAuthPin("1234");
+                when(customerService.registerCustomer(any())).thenReturn(response);
 
-        CustomerAuthResponse response = CustomerAuthResponse.builder()
-                .customerId("CUS001")
-                .customerName("John Doe")
-                .authToken("token123")
-                .build();
-        response.setStatus("SUCCESS");
-        response.setStatusCode("200");
+                mockMvc.perform(post("/customer/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value("SUCCESS"));
+        }
 
-        when(customerService.authenticate(any())).thenReturn(response);
+        @Test
+        @DisplayName("Should authenticate customer successfully")
+        void testAuthenticateCustomer() throws Exception {
+                CustomerAuthRequest request = new CustomerAuthRequest();
+                request.setEmailIdOrPhone("9876543210");
+                request.setAuthPin("1234");
 
-        mockMvc.perform(post("/customer/authenticate")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SUCCESS"));
-    }
+                CustomerAuthResponse response = CustomerAuthResponse.builder()
+                                .customerId("CUS001")
+                                .customerName("John Doe")
+                                .authToken("token123")
+                                .build();
+                response.setStatus("SUCCESS");
+                response.setStatusCode("200");
+
+                when(customerService.authenticate(any())).thenReturn(response);
+
+                mockMvc.perform(post("/customer/authenticate")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value("SUCCESS"));
+        }
 }

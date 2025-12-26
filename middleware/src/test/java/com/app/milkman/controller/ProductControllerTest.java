@@ -23,72 +23,75 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("Product Controller Integration Tests")
 class ProductControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockBean
-    private ProductService productService;
+        @MockBean
+        private ProductService productService;
 
-    @Test
-    @DisplayName("Should register product successfully")
-    void testRegisterProduct() throws Exception {
-        ProductRegRequest request = new ProductRegRequest();
-        request.setProductId("P001");
-        request.setProductName("Milk");
-        request.setProductDescription("Fresh Milk");
-        request.setPrice(50.00);
+        @MockBean
+        private com.app.milkman.component.JWTService jwtService;
 
-        ProductRegResponse response = ProductRegResponse.builder()
-                .productId("P001")
-                .productName("Milk")
-                .build();
-        response.setStatus("SUCCESS");
-        response.setStatusCode("200");
+        @Test
+        @DisplayName("Should register product successfully")
+        void testRegisterProduct() throws Exception {
+                ProductRegRequest request = new ProductRegRequest();
+                request.setProductId("P001");
+                request.setProductName("Milk");
+                request.setProductDescription("Fresh Milk");
+                request.setPrice(50.00);
 
-        when(productService.registerProduct(any())).thenReturn(response);
+                ProductRegResponse response = ProductRegResponse.builder()
+                                .productId("P001")
+                                .productName("Milk")
+                                .build();
+                response.setStatus("SUCCESS");
+                response.setStatusCode("200");
 
-        mockMvc.perform(post("/product/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SUCCESS"));
-    }
+                when(productService.registerProduct(any())).thenReturn(response);
 
-    @Test
-    @DisplayName("Should update product successfully")
-    void testUpdateProduct() throws Exception {
-        ProductRegRequest request = new ProductRegRequest();
-        request.setProductId("P001");
-        request.setProductName("Milk Updated");
-        request.setPrice(55.00);
+                mockMvc.perform(post("/product/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value("SUCCESS"));
+        }
 
-        ProductRegResponse response = ProductRegResponse.builder()
-                .productId("P001")
-                .productName("Milk Updated")
-                .build();
-        response.setStatus("SUCCESS");
+        @Test
+        @DisplayName("Should update product successfully")
+        void testUpdateProduct() throws Exception {
+                ProductRegRequest request = new ProductRegRequest();
+                request.setProductId("P001");
+                request.setProductName("Milk Updated");
+                request.setPrice(55.00);
 
-        when(productService.updateProduct(any())).thenReturn(response);
+                ProductRegResponse response = ProductRegResponse.builder()
+                                .productId("P001")
+                                .productName("Milk Updated")
+                                .build();
+                response.setStatus("SUCCESS");
 
-        mockMvc.perform(put("/product/update")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SUCCESS"));
-    }
+                when(productService.updateProduct(any())).thenReturn(response);
 
-    @Test
-    @DisplayName("Should get all products")
-    void testGetAllProducts() throws Exception {
-        when(productService.getAllProducts(any())).thenReturn(new ArrayList<>());
+                mockMvc.perform(put("/product/update")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value("SUCCESS"));
+        }
 
-        mockMvc.perform(get("/product/getProducts")
-                .param("page", "0")
-                .param("size", "10"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
-    }
+        @Test
+        @DisplayName("Should get all products")
+        void testGetAllProducts() throws Exception {
+                when(productService.getAllProducts(any())).thenReturn(new ArrayList<>());
+
+                mockMvc.perform(get("/product/getProducts")
+                                .param("page", "0")
+                                .param("size", "10"))
+                                .andExpect(status().isOk())
+                                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+        }
 }
