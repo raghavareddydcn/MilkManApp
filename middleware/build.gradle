@@ -96,3 +96,180 @@ task checkCoverage {
         println "📊 View HTML report: build/reports/jacoco/test/html/index.html"
     }
 }
+
+// ==================== AUTOMATION TESTS INTEGRATION ====================
+
+// Task to check if Node.js is installed
+task checkNodeJs {
+    doLast {
+        try {
+            def nodeVersion = "node --version".execute()
+            nodeVersion.waitFor()
+            if (nodeVersion.exitValue() == 0) {
+                println "✅ Node.js is installed: ${nodeVersion.text.trim()}"
+            } else {
+                throw new GradleException("❌ Node.js is not installed. Please install Node.js 18+ from https://nodejs.org/")
+            }
+        } catch (Exception e) {
+            throw new GradleException("❌ Node.js is not installed. Please install Node.js 18+ from https://nodejs.org/")
+        }
+    }
+}
+
+// Task to setup automation tests (install dependencies)
+task setupAutomationTests(type: Exec) {
+    dependsOn checkNodeJs
+    workingDir "${project.rootDir}/../automation-tests"
+    
+    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+        commandLine 'cmd', '/c', 'npm', 'install'
+    } else {
+        commandLine 'npm', 'install'
+    }
+    
+    doFirst {
+        println ""
+        println "=" * 60
+        println "  Setting up Automation Tests"
+        println "=" * 60
+        println ""
+    }
+    
+    doLast {
+        println ""
+        println "✅ Automation test dependencies installed"
+        println ""
+    }
+}
+
+// Task to run API automation tests
+task runApiTests(type: Exec) {
+    dependsOn setupAutomationTests
+    workingDir "${project.rootDir}/../automation-tests"
+    
+    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+        commandLine 'cmd', '/c', 'npm', 'run', 'test:api'
+    } else {
+        commandLine 'npm', 'run', 'test:api'
+    }
+    
+    ignoreExitValue = true
+    
+    doFirst {
+        println ""
+        println "=" * 60
+        println "  Running API Automation Tests"
+        println "=" * 60
+        println ""
+    }
+    
+    doLast {
+        println ""
+        if (executionResult.get().exitValue == 0) {
+            println "✅ API automation tests PASSED"
+        } else {
+            println "⚠️  Some API automation tests FAILED"
+            println "📊 Check report: automation-tests/reports/api/api-test-report.html"
+        }
+        println ""
+    }
+}
+
+// Task to run UI automation tests
+task runUiTests(type: Exec) {
+    dependsOn setupAutomationTests
+    workingDir "${project.rootDir}/../automation-tests"
+    
+    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+        commandLine 'cmd', '/c', 'npm', 'run', 'test:ui'
+    } else {
+        commandLine 'npm', 'run', 'test:ui'
+    }
+    
+    ignoreExitValue = true
+    
+    doFirst {
+        println ""
+        println "=" * 60
+        println "  Running UI Automation Tests"
+        println "=" * 60
+        println ""
+    }
+    
+    doLast {
+        println ""
+        if (executionResult.get().exitValue == 0) {
+            println "✅ UI automation tests PASSED"
+        } else {
+            println "⚠️  Some UI automation tests FAILED"
+            println "📊 Check report: automation-tests/reports/ui/ui-test-report.html"
+        }
+        println ""
+    }
+}
+
+// Task to run all automation tests
+task runAutomationTests {
+    dependsOn runApiTests, runUiTests
+    
+    doLast {
+        println ""
+        println "=" * 60
+        println "  Automation Tests Complete"
+        println "=" * 60
+        println ""
+        println "📊 View Reports:"
+        println "   API Tests:  automation-tests/reports/api/api-test-report.html"
+        println "   UI Tests:   automation-tests/reports/ui/ui-test-report.html"
+        println ""
+        println "To view reports, run: cd ../automation-tests && npm run report"
+        println ""
+    }
+}
+
+// Task to run only API tests (faster)
+task testWithApiAutomation {
+    dependsOn test, runApiTests
+    
+    doLast {
+        println ""
+        println "=" * 60
+        println "  Build + API Automation Tests Complete"
+        println "=" * 60
+        println ""
+    }
+}
+
+// Task to run full build with all automation tests
+task buildWithAutomation {
+    dependsOn build, runAutomationTests
+    
+    doLast {
+        println ""
+        println "=" * 60
+        println "  Full Build + Automation Tests Complete"
+        println "=" * 60
+        println ""
+        println "✅ Unit Tests:      build/reports/tests/test/index.html"
+        println "✅ Coverage Report: build/reports/jacoco/test/html/index.html"
+        println "✅ API Tests:       automation-tests/reports/api/api-test-report.html"
+        println "✅ UI Tests:        automation-tests/reports/ui/ui-test-report.html"
+        println ""
+    }
+}
+
+// Make build task run automation tests by default (optional - comment out if not desired)
+// build.finalizedBy runAutomationTests
+
+// Custom task for CI/CD pipeline
+task cicdTest {
+    dependsOn clean, build, runAutomationTests
+    
+    doLast {
+        println ""
+        println "=" * 60
+        println "  CI/CD Test Pipeline Complete"
+        println "=" * 60
+        println ""
+    }
+}

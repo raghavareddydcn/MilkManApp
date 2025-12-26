@@ -1,0 +1,9 @@
+# Automation Tests
+
+/node_modules/
+/reports/
+/screenshots/
+.env
+*.log
+.DS_Store
+package-lock.json

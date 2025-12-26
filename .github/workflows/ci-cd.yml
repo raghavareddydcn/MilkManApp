@@ -1,0 +1,153 @@
+name: MilkMan CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: milkman
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: Welcome@1234
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: automation-tests/package-lock.json
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x middleware/gradlew
+      working-directory: ${{ github.workspace }}
+
+    - name: Build Middleware
+      run: ./gradlew clean build
+      working-directory: middleware
+
+    - name: Run Unit Tests
+      run: ./gradlew test
+      working-directory: middleware
+
+    - name: Generate Code Coverage Report
+      run: ./gradlew jacocoTestReport
+      working-directory: middleware
+
+    - name: Start Middleware Application
+      run: |
+        ./gradlew bootRun &
+        echo $! > app.pid
+        sleep 30
+      working-directory: middleware
+      env:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5433/milkman
+        SPRING_DATASOURCE_USERNAME: postgres
+        SPRING_DATASOURCE_PASSWORD: Welcome@1234
+
+    - name: Wait for Application to be Ready
+      run: |
+        timeout 60 bash -c 'until curl -f http://localhost:8081/milkman/healthCheck; do sleep 2; done'
+
+    - name: Setup Automation Tests
+      run: |
+        cd automation-tests
+        cp .env.example .env
+        npm install
+
+    - name: Run API Automation Tests
+      run: npm run test:api
+      working-directory: automation-tests
+      continue-on-error: true
+
+    - name: Run UI Automation Tests
+      run: npm run test:ui
+      working-directory: automation-tests
+      continue-on-error: true
+      env:
+        HEADLESS: true
+
+    - name: Stop Middleware Application
+      if: always()
+      run: |
+        if [ -f middleware/app.pid ]; then
+          kill $(cat middleware/app.pid) || true
+        fi
+
+    - name: Upload Unit Test Reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: unit-test-reports
+        path: middleware/build/reports/tests/test/
+
+    - name: Upload Code Coverage Reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-reports
+        path: middleware/build/reports/jacoco/test/
+
+    - name: Upload API Test Reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: api-test-reports
+        path: automation-tests/reports/api/
+
+    - name: Upload UI Test Reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: ui-test-reports
+        path: automation-tests/reports/ui/
+
+    - name: Upload Screenshots
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-screenshots
+        path: automation-tests/reports/screenshots/
+
+    - name: Test Summary
+      if: always()
+      run: |
+        echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Unit Tests" >> $GITHUB_STEP_SUMMARY
+        echo "- Location: middleware/build/reports/tests/test/index.html" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Code Coverage" >> $GITHUB_STEP_SUMMARY
+        echo "- Location: middleware/build/reports/jacoco/test/html/index.html" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### API Automation Tests" >> $GITHUB_STEP_SUMMARY
+        echo "- Location: automation-tests/reports/api/api-test-report.html" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### UI Automation Tests" >> $GITHUB_STEP_SUMMARY
+        echo "- Location: automation-tests/reports/ui/ui-test-report.html" >> $GITHUB_STEP_SUMMARY

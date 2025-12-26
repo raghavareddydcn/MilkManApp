@@ -12,6 +12,7 @@ MilkManApp/
 ├── monitoring/           # Grafana + Prometheus observability stack
 ├── database/             # PostgreSQL 15 initialization scripts
 ├── dev-testing/          # Development test files and debug tools
+├── automation-tests/     # Comprehensive API & UI automation tests (90+ tests)
 └── docker-compose.yml    # Complete service orchestration
 ```
 
@@ -227,6 +228,52 @@ Development test files located in `/dev-testing/`:
 - HTML test pages for API endpoints
 - PowerShell test scripts
 - Debug tools and utilities
+
+### Automation Testing (NEW! 🎉)
+Comprehensive test suite with 90+ automated tests covering all APIs and web pages.
+
+**Quick Start:**
+```bash
+# Full build with all tests
+cd middleware
+./gradlew buildWithAutomation
+
+# Quick API validation
+./gradlew testWithApiAutomation
+
+# View test reports
+cd ../automation-tests
+npm run report
+```
+
+**Test Coverage:**
+- ✅ **60+ API Tests**: All REST endpoints (Auth, Customers, Products, Orders, Subscriptions)
+- ✅ **30+ UI Tests**: All web pages (Login, Registration, Products, Navigation)
+- ✅ **Role-Based Testing**: Customer & Admin workflows
+- ✅ **Automated Reports**: HTML reports with screenshots on failures
+
+**Documentation:**
+- `automation-tests/QUICKSTART.md` - 5-minute setup guide
+- `automation-tests/README.md` - Complete documentation
+- `BUILD_INTEGRATION.md` - Build integration guide
+- `QUICK_REFERENCE.md` - Command reference
+
+**Available Gradle Tasks:**
+```bash
+./gradlew buildWithAutomation     # Build + All tests
+./gradlew testWithApiAutomation   # Build + API tests only
+./gradlew runAutomationTests      # Run tests without rebuild
+./gradlew runApiTests             # API tests only
+./gradlew runUiTests              # UI tests only
+./gradlew cicdTest                # CI/CD pipeline task
+```
+
+**Test Reports:**
+- Unit Tests: `middleware/build/reports/tests/test/index.html`
+- Code Coverage: `middleware/build/reports/jacoco/test/html/index.html`
+- API Tests: `automation-tests/reports/api/api-test-report.html`
+- UI Tests: `automation-tests/reports/ui/ui-test-report.html`
+
 
 ## 🐳 Docker
 
