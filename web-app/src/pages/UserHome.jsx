@@ -13,6 +13,7 @@ const UserHome = () => {
   })
   const [profile, setProfile] = useState(null)
   const [recentOrders, setRecentOrders] = useState([])
+  const [recentSubscriptions, setRecentSubscriptions] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -46,6 +47,12 @@ const UserHome = () => {
         new Date(b.orderDate) - new Date(a.orderDate)
       )
       setRecentOrders(sortedOrders.slice(0, 3))
+      
+      // Get 3 most recent subscriptions sorted by date
+      const sortedSubs = userSubs.sort((a, b) => 
+        new Date(b.deliveryStartDate || b.createdDate) - new Date(a.deliveryStartDate || a.createdDate)
+      )
+      setRecentSubscriptions(sortedSubs.slice(0, 3))
     } catch (error) {
       console.error('Error fetching user data:', error)
     } finally {
@@ -55,6 +62,10 @@ const UserHome = () => {
 
   const formatOrderId = (orderId) => {
     return orderId ? `ORD-${orderId.slice(-8).toUpperCase()}` : 'N/A'
+  }
+
+  const formatSubscriptionId = (subscriptionId) => {
+    return subscriptionId ? `SUB-${subscriptionId.slice(-8).toUpperCase()}` : 'N/A'
   }
 
   const quickActions = [
@@ -183,17 +194,23 @@ const UserHome = () => {
         </div>
       </div>
 
-      {/* Recent Orders */}
-      {recentOrders.length > 0 && (
+      {/* Recent Orders & Subscriptions */}
+      {(recentOrders.length > 0 || recentSubscriptions.length > 0) && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-800">Recent Orders</h2>
-            <Link to="/orders" className="text-milkman font-semibold hover:underline flex items-center gap-1">
-              View All <ArrowRight className="w-4 h-4" />
-            </Link>
+            <h2 className="text-2xl font-bold text-gray-800">Recent Activity</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {recentOrders.map((order) => (
+          {/* Recent Orders */}
+          {recentOrders.length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold text-gray-700">Recent Orders</h3>
+                <Link to="/orders" className="text-milkman text-sm font-semibold hover:underline flex items-center gap-1">
+                  View All Orders <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {recentOrders.map((order) => (
               <div key={order.orderId} className="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="bg-purple-100 p-2 rounded-lg">
@@ -221,18 +238,67 @@ const UserHome = () => {
                 </div>
               </div>
             ))}
-          </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Recent Subscriptions */}
+          {recentSubscriptions.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold text-gray-700">Recent Subscriptions</h3>
+                <Link to="/subscriptions" className="text-milkman text-sm font-semibold hover:underline flex items-center gap-1">
+                  View All Subscriptions <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {recentSubscriptions.map((subscription) => (
+                  <div key={subscription.subscriptionId} className="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="bg-orange-100 p-2 rounded-lg">
+                        <Calendar className="w-5 h-5 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-800">{formatSubscriptionId(subscription.subscriptionId)}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(subscription.deliveryStartDate).toLocaleDateString('en-IN')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mb-3">
+                      <p className="text-xs text-gray-600">
+                        {subscription.deliveryFrequency.replace('_', ' ')}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl font-bold text-milkman">
+                        ₹{(subscription.orderTotal || 0).toFixed(2)}
+                      </span>
+                      <span className={`text-xs px-3 py-1 rounded-full font-semibold ${
+                        subscription.status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
+                        subscription.status === 'PAUSED' ? 'bg-yellow-100 text-yellow-700' :
+                        subscription.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
+                        'bg-blue-100 text-blue-700'
+                      }`}>
+                        {subscription.status || 'ACTIVE'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Empty State */}
-      {recentOrders.length === 0 && (
+      {recentOrders.length === 0 && recentSubscriptions.length === 0 && (
         <div className="bg-gray-50 rounded-xl p-12 text-center">
           <div className="bg-gray-200 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
             <ShoppingCart className="w-10 h-10 text-gray-400" />
           </div>
-          <h3 className="text-xl font-bold text-gray-800 mb-2">No Orders Yet</h3>
-          <p className="text-gray-600 mb-6">Start by ordering fresh milk products</p>
+          <h3 className="text-xl font-bold text-gray-800 mb-2">No Activity Yet</h3>
+          <p className="text-gray-600 mb-6">Start by ordering fresh milk or setting up a subscription</p>
           <Link
             to="/products"
             className="inline-flex items-center gap-2 bg-milkman text-white px-6 py-3 rounded-lg font-semibold hover:bg-milkman-dark transition-colors"

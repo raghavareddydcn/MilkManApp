@@ -26,13 +26,13 @@ const processQueue = (error, token = null) => {
 
 // Add token to requests if available
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
+  const token = sessionStorage.getItem('token')
   console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`)
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
     console.log(`🔑 Token attached: ${token.substring(0, 20)}...`)
   } else {
-    console.warn('⚠️ No token found in localStorage')
+    console.warn('⚠️ No token found in sessionStorage')
   }
   return config
 })
@@ -64,13 +64,13 @@ api.interceptors.response.use(
       originalRequest._retry = true
       isRefreshing = true
 
-      const refreshToken = localStorage.getItem('refreshToken')
+      const refreshToken = sessionStorage.getItem('refreshToken')
 
       if (!refreshToken) {
         // No refresh token, logout
-        localStorage.removeItem('token')
-        localStorage.removeItem('refreshToken')
-        localStorage.removeItem('user')
+        sessionStorage.removeItem('token')
+        sessionStorage.removeItem('refreshToken')
+        sessionStorage.removeItem('user')
         window.location.href = '/login'
         return Promise.reject(error)
       }
@@ -82,13 +82,13 @@ api.interceptors.response.use(
 
         const { authToken, refreshToken: newRefreshToken, role, customerId, customerName } = response.data
 
-        localStorage.setItem('token', authToken)
-        localStorage.setItem('refreshToken', newRefreshToken)
+        sessionStorage.setItem('token', authToken)
+        sessionStorage.setItem('refreshToken', newRefreshToken)
         
         // Update user data with refreshed info
         if (customerId && customerName) {
           const user = { customerId, customerName, role }
-          localStorage.setItem('user', JSON.stringify(user))
+          sessionStorage.setItem('user', JSON.stringify(user))
         }
 
         api.defaults.headers.common['Authorization'] = 'Bearer ' + authToken
@@ -101,9 +101,9 @@ api.interceptors.response.use(
         processQueue(err, null)
         
         // Refresh failed, logout
-        localStorage.removeItem('token')
-        localStorage.removeItem('refreshToken')
-        localStorage.removeItem('user')
+        sessionStorage.removeItem('token')
+        sessionStorage.removeItem('refreshToken')
+        sessionStorage.removeItem('user')
         window.location.href = '/login'
         
         return Promise.reject(err)

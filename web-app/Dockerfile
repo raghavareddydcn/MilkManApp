@@ -1,12 +1,15 @@
 # Build stage
 FROM node:18-alpine AS builder
 
+ARG CACHEBUST=1
+
 WORKDIR /app
 
 COPY package.json ./
 RUN npm install
 
 COPY . .
+RUN echo "Building with CACHEBUST: $CACHEBUST"
 RUN npm run build
 
 # Production stage

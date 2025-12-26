@@ -4,6 +4,7 @@ import { useActivityTracker } from '../hooks/useActivityTracker'
 import { useSessionTimeout } from '../hooks/useSessionTimeout'
 import { useSessionCleanup } from '../hooks/useSessionCleanup'
 
+// Session management: Uses sessionStorage (clears on browser/tab close)
 const AuthContext = createContext(null)
 
 export const AuthProvider = ({ children }) => {
@@ -13,38 +14,29 @@ export const AuthProvider = ({ children }) => {
 
   // Check for expired session on mount
   useEffect(() => {
-    const sessionExpired = localStorage.getItem('sessionExpired')
-    if (sessionExpired === 'true') {
-      localStorage.clear()
-      setUser(null)
-      setLoading(false)
-      return
-    }
-
     // Check if user is already logged in
-    const token = localStorage.getItem('token')
-    const refreshToken = localStorage.getItem('refreshToken')
-    const userData = localStorage.getItem('user')
+    const token = sessionStorage.getItem('token')
+    const refreshToken = sessionStorage.getItem('refreshToken')
+    const userData = sessionStorage.getItem('user')
     
     if (token && refreshToken && userData && userData !== 'undefined') {
       try {
         setUser(JSON.parse(userData))
       } catch (error) {
-        console.error('Invalid user data in localStorage:', error)
-        localStorage.removeItem('user')
-        localStorage.removeItem('token')
-        localStorage.removeItem('refreshToken')
+        console.error('Invalid user data in sessionStorage:', error)
+        sessionStorage.removeItem('user')
+        sessionStorage.removeItem('token')
+        sessionStorage.removeItem('refreshToken')
       }
     }
     setLoading(false)
   }, [])
 
   const handleLogout = useCallback(() => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('refreshToken')
-    localStorage.removeItem('user')
-    localStorage.removeItem('lastActivity')
-    sessionStorage.clear()
+    sessionStorage.removeItem('token')
+    sessionStorage.removeItem('refreshToken')
+    sessionStorage.removeItem('user')
+    sessionStorage.removeItem('lastActivity')
     setUser(null)
     setShowSessionWarning(false)
   }, [])
@@ -91,10 +83,9 @@ export const AuthProvider = ({ children }) => {
       if (status === 'SUCCESS' && authToken) {
         console.log('✅ Status is SUCCESS, proceeding with storage...')
         
-        localStorage.setItem('token', authToken)
-        localStorage.setItem('refreshToken', refreshToken)
-        localStorage.setItem('lastActivity', Date.now().toString())
-        localStorage.removeItem('sessionExpired')
+        sessionStorage.setItem('token', authToken)
+        sessionStorage.setItem('refreshToken', refreshToken)
+        sessionStorage.setItem('lastActivity', Date.now().toString())
         
         const customer = { customerId, customerName, role }
         
@@ -106,7 +97,7 @@ export const AuthProvider = ({ children }) => {
         console.log('  role === "ADMIN"?', customer.role === 'ADMIN')
         
         const jsonString = JSON.stringify(customer)
-        localStorage.setItem('user', jsonString)
+        sessionStorage.setItem('user', jsonString)
         console.log('✅ Login successful -', customer.customerName, '| Role:', customer.role)
         
         setUser(customer)
