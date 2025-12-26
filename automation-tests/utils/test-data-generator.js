@@ -60,7 +60,7 @@ class TestDataGenerator {
         return {
             productName: `${brand} ${type}`,
             productDescription: `Premium quality ${type.toLowerCase()} from ${brand}`,
-            productPrice: this.randomNumber(20, 200),
+            price: this.randomNumber(20, 200),
             productQuantity: this.randomNumber(100, 1000),
             productUnit: 'ml',
             productCategory: type

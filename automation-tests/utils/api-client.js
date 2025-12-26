@@ -325,14 +325,14 @@ class APIClient {
      * Encrypt data
      */
     async encrypt(data) {
-        return await this.get(`/healthCheck/encrypt?encrypt=${data}`);
+        return await this.get(`/healthCheck/encrypt?encrypt=${encodeURIComponent(data)}`);
     }
 
     /**
      * Decrypt data
      */
     async decrypt(data) {
-        return await this.get(`/healthCheck/decrypt?decrypt=${data}`);
+        return await this.get(`/healthCheck/decrypt?decrypt=${encodeURIComponent(data)}`);
     }
 }
 
