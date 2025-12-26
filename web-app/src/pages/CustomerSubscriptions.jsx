@@ -255,9 +255,7 @@ const CustomerSubscriptions = () => {
         ) : filteredSubscriptions.length === 0 ? (
           <div className="col-span-full text-center py-8 text-gray-500">No subscriptions found</div>
         ) : (
-          filteredSubscriptions.map((subscription) => {
-            console.log('🔍 Rendering subscription:', subscription.subscriptionId, subscription)
-            return (
+          filteredSubscriptions.map((subscription) => (
             <div key={subscription.subscriptionId || Math.random()} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden">
               <div className="p-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
@@ -342,7 +340,7 @@ const CustomerSubscriptions = () => {
                 )}
               </div>
             </div>
-          )})
+          ))
         )}
       </div>
 

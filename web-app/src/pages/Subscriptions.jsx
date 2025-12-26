@@ -34,27 +34,11 @@ const Subscriptions = () => {
         productAPI.getAll()
       ])
       
-      console.log('✅ Subscriptions API Response:', subsRes)
-      console.log('✅ Subscriptions data:', subsRes.data)
-      
-      if (subsRes.data && Array.isArray(subsRes.data)) {
-        console.log(`✅ Loaded ${subsRes.data.length} subscriptions`)
-        if (subsRes.data.length > 0) {
-          const first = subsRes.data[0]
-          console.log('✅ First subscription:', first)
-          console.log('✅ First subscription ID:', first.subscriptionId)
-          console.log('✅ First subscription keys:', Object.keys(first))
-        }
-      } else {
-        console.warn('⚠️ Unexpected subscriptions data format:', subsRes.data)
-      }
-      
       setSubscriptions(subsRes.data || [])
       setCustomers(customersRes.data || [])
       setProducts(productsRes.data || [])
     } catch (error) {
-      console.error('❌ Error fetching data:', error)
-      console.error('❌ Error details:', error.response?.data || error.message)
+      console.error('Error fetching data:', error)
     } finally {
       setLoading(false)
     }
@@ -135,14 +119,8 @@ const Subscriptions = () => {
   }
 
   const handleDelete = async (subscriptionId) => {
-    console.log('🗑️ handleDelete called with ID:', subscriptionId)
-    console.log('🗑️ ID type:', typeof subscriptionId)
-    console.log('🗑️ ID is undefined?', subscriptionId === undefined)
-    console.log('🗑️ ID is null?', subscriptionId === null)
-    
     if (!subscriptionId) {
-      console.error('❌ subscriptionId is undefined or null!')
-      alert('Error: Subscription ID is missing. Check browser console for details.')
+      alert('Error: Subscription ID is missing.')
       return
     }
     
@@ -151,13 +129,10 @@ const Subscriptions = () => {
     }
 
     try {
-      console.log('🗑️ Calling delete API for ID:', subscriptionId)
       await subscriptionAPI.delete(subscriptionId)
-      console.log('✅ Delete successful')
       await fetchData()
     } catch (error) {
-      console.error('❌ Error deleting subscription:', error)
-      console.error('❌ Error response:', error.response?.data)
+      console.error('Error deleting subscription:', error)
       alert('Error deleting subscription. Please try again.')
     }
   }
@@ -181,8 +156,8 @@ const Subscriptions = () => {
   }
 
   const getCustomerName = (customerId) => {
-    const customer = customers.find(c => c.customerid === customerId)
-    return customer?.name || 'Unknown'
+    const customer = customers.find(c => c.customerId === customerId)
+    return customer ? `${customer.firstName} ${customer.lastName}` : 'Unknown'
   }
 
   const filteredSubscriptions = subscriptions.filter(sub =>
@@ -220,28 +195,13 @@ const Subscriptions = () => {
         />
       </div>
 
-      {/* DEBUG INFO */}
-      {subscriptions.length > 0 && (
-        <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 mb-4">
-          <strong>🐛 DEBUG INFO:</strong>
-          <pre className="text-xs mt-2 overflow-auto max-h-40">
-            {JSON.stringify(subscriptions[0], null, 2)}
-          </pre>
-          <p className="mt-2 text-sm">
-            <strong>Keys:</strong> {Object.keys(subscriptions[0]).join(', ')}
-          </p>
-        </div>
-      )}
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {loading ? (
           <div className="col-span-full text-center py-8 text-gray-500">Loading...</div>
         ) : filteredSubscriptions.length === 0 ? (
           <div className="col-span-full text-center py-8 text-gray-500">No subscriptions found</div>
         ) : (
-          filteredSubscriptions.map((subscription) => {
-            console.log('🔍 Rendering subscription:', subscription.subscriptionId, subscription)
-            return (
+          filteredSubscriptions.map((subscription) => (
             <div key={subscription.subscriptionId || Math.random()} className="card border-l-4 border-orange-500">
               <div className="flex justify-between items-start mb-4">
                 <div>
@@ -306,7 +266,7 @@ const Subscriptions = () => {
                 </div>
               </div>
             </div>
-          )})
+          ))
         )}
       </div>
 
@@ -331,8 +291,8 @@ const Subscriptions = () => {
                 >
                   <option value="">Select Customer</option>
                   {customers.map(customer => (
-                    <option key={customer.customerid} value={customer.customerid}>
-                      {customer.name} - {customer.primaryphone}
+                    <option key={customer.customerId} value={customer.customerId}>
+                      {customer.firstName} {customer.lastName} - {customer.primaryPhone}
                     </option>
                   ))}
                 </select>
@@ -342,21 +302,21 @@ const Subscriptions = () => {
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Products *</label>
                 <div className="border border-gray-300 rounded-lg p-4 max-h-48 overflow-y-auto space-y-2">
                   {products.map(product => (
-                    <label key={product.productid} className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label key={product.productId} className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
                       <input
                         type="checkbox"
-                        checked={formData.productIds.includes(product.productid)}
+                        checked={formData.productIds.includes(product.productId)}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setFormData({ ...formData, productIds: [...formData.productIds, product.productid] })
+                            setFormData({ ...formData, productIds: [...formData.productIds, product.productId] })
                           } else {
-                            setFormData({ ...formData, productIds: formData.productIds.filter(id => id !== product.productid) })
+                            setFormData({ ...formData, productIds: formData.productIds.filter(id => id !== product.productId) })
                           }
                         }}
                         className="w-4 h-4 text-milkman"
                       />
-                      <span className="flex-1">{product.productname} - {product.quantity}</span>
-                      <span className="font-semibold text-milkman">₹{product.price}</span>
+                      <span className="flex-1">{product.productName} - {product.quantity || product.packageSize}</span>
+                      <span className="font-semibold text-milkman">₹{product.productPrice}</span>
                     </label>
                   ))}
                 </div>
@@ -442,16 +402,16 @@ const Subscriptions = () => {
                 </div>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {products.map(product => {
-                    const selected = selectedProducts.find(p => p.productId === product.productid)
+                    const selected = selectedProducts.find(p => p.productId === product.productId)
                     return (
                       <div
-                        key={product.productid}
+                        key={product.productId}
                         className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${
                           selected 
                             ? 'bg-orange-50 border-orange-400 shadow-sm' 
                             : 'bg-white border-gray-200 hover:border-orange-200 hover:bg-orange-25'
                         }`}
-                        onClick={() => toggleProductSelection(product.productid)}
+                        onClick={() => toggleProductSelection(product.productId)}
                       >
                         <div className="flex items-center gap-3 flex-1">
                           <div className={`flex items-center justify-center w-6 h-6 rounded border-2 transition-colors ${
@@ -465,9 +425,9 @@ const Subscriptions = () => {
                           </div>
                           <div className="flex-1">
                             <p className={`font-medium ${selected ? 'text-orange-800' : 'text-gray-800'}`}>
-                              {product.productname}
+                              {product.productName}
                             </p>
-                            <p className="text-sm text-gray-500">₹{product.price?.toFixed(2)} per unit</p>
+                            <p className="text-sm text-gray-500">₹{product.productPrice?.toFixed(2)} per unit</p>
                           </div>
                         </div>
                         {selected && (
@@ -480,7 +440,7 @@ const Subscriptions = () => {
                               value={selected.quantity}
                               onChange={(e) => {
                                 e.stopPropagation()
-                                updateQuantity(product.productid, e.target.value)
+                                updateQuantity(product.productId, e.target.value)
                               }}
                               onClick={(e) => e.stopPropagation()}
                               className="w-20 px-3 py-2 border-2 border-orange-300 rounded-lg text-center font-semibold focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
@@ -488,7 +448,7 @@ const Subscriptions = () => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                toggleProductSelection(product.productid)
+                                toggleProductSelection(product.productId)
                               }}
                               className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                               title="Remove product"
@@ -512,11 +472,11 @@ const Subscriptions = () => {
                   <h4 className="font-semibold text-gray-700 mb-2">Subscription Summary</h4>
                   <div className="space-y-1">
                     {selectedProducts.map(sp => {
-                      const product = products.find(p => p.productid === sp.productId)
+                      const product = products.find(p => p.productId === sp.productId)
                       return (
                         <div key={sp.productId} className="flex justify-between text-sm">
-                          <span>{product?.productname} x {sp.quantity}</span>
-                          <span className="font-medium">₹{((product?.price || 0) * sp.quantity).toFixed(2)}</span>
+                          <span>{product?.productName} x {sp.quantity}</span>
+                          <span className="font-medium">₹{((product?.productPrice || 0) * sp.quantity).toFixed(2)}</span>
                         </div>
                       )
                     })}
@@ -524,8 +484,8 @@ const Subscriptions = () => {
                       <span>Total:</span>
                       <span className="text-orange-600">
                         ₹{selectedProducts.reduce((total, sp) => {
-                          const product = products.find(p => p.productid === sp.productId)
-                          return total + ((product?.price || 0) * sp.quantity)
+                          const product = products.find(p => p.productId === sp.productId)
+                          return total + ((product?.productPrice || 0) * sp.quantity)
                         }, 0).toFixed(2)}
                       </span>
                     </div>
