@@ -76,7 +76,7 @@ jobs:
     - name: Setup Automation Tests
       run: |
         cp .env.example .env
-        npm ci
+        npm install
       working-directory: automation-tests
 
     - name: Run API Automation Tests
